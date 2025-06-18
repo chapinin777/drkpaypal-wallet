@@ -6,53 +6,62 @@ import { Wallet, Shield, Send, CreditCard } from 'lucide-react';
 
 const WalletAuth = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="max-w-4xl w-full">
+    <div className="min-h-screen dark-gradient flex items-center justify-center p-4">
+      <div className="max-w-4xl w-full fade-in">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="flex items-center justify-center mb-4">
-            <Wallet className="h-12 w-12 text-blue-600 mr-3" />
-            <h1 className="text-4xl font-bold text-gray-900">PayPal Wallet</h1>
+          <div className="flex items-center justify-center mb-6">
+            <div className="relative">
+              <Wallet className="h-16 w-16 text-blue-400 mr-4 drop-shadow-lg" />
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full animate-pulse"></div>
+            </div>
+            <div className="text-left">
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-400 to-white bg-clip-text text-transparent">
+                DrkPaypal
+              </h1>
+              <p className="text-blue-300 text-lg font-medium">Wallet</p>
+            </div>
           </div>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Secure, fast, and easy way to manage your digital payments. Send money, receive payments, and keep track of all your transactions.
+          <p className="text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
+            The secure, fast, and anonymous way to manage your digital payments. 
+            Send money, receive payments, and keep track of all your transactions in the dark.
           </p>
         </div>
 
         {/* Features */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
-          <Card className="text-center">
-            <CardHeader>
-              <Shield className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-              <CardTitle>Secure</CardTitle>
+          <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-all duration-300 hover:scale-105 slide-up">
+            <CardHeader className="text-center">
+              <Shield className="h-10 w-10 text-blue-400 mx-auto mb-3 drop-shadow-md" />
+              <CardTitle className="text-white">Anonymous & Secure</CardTitle>
             </CardHeader>
             <CardContent>
-              <CardDescription>
-                Bank-level security with encryption and fraud protection
+              <CardDescription className="text-gray-400">
+                Military-grade encryption with zero-knowledge privacy protection
               </CardDescription>
             </CardContent>
           </Card>
 
-          <Card className="text-center">
-            <CardHeader>
-              <Send className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-              <CardTitle>Fast Transfers</CardTitle>
+          <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-all duration-300 hover:scale-105 slide-up" style={{ animationDelay: '0.1s' }}>
+            <CardHeader className="text-center">
+              <Send className="h-10 w-10 text-blue-400 mx-auto mb-3 drop-shadow-md" />
+              <CardTitle className="text-white">Instant Transfers</CardTitle>
             </CardHeader>
             <CardContent>
-              <CardDescription>
-                Send money instantly to friends and family worldwide
+              <CardDescription className="text-gray-400">
+                Lightning-fast transactions worldwide with minimal fees
               </CardDescription>
             </CardContent>
           </Card>
 
-          <Card className="text-center">
-            <CardHeader>
-              <CreditCard className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-              <CardTitle>Multiple Currencies</CardTitle>
+          <Card className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-all duration-300 hover:scale-105 slide-up" style={{ animationDelay: '0.2s' }}>
+            <CardHeader className="text-center">
+              <CreditCard className="h-10 w-10 text-blue-400 mx-auto mb-3 drop-shadow-md" />
+              <CardTitle className="text-white">Multi-Currency</CardTitle>
             </CardHeader>
             <CardContent>
-              <CardDescription>
-                Support for USD, EUR, GBP, Bitcoin, and Ethereum
+              <CardDescription className="text-gray-400">
+                Support for USD, EUR, GBP, Bitcoin, Ethereum, and USDT
               </CardDescription>
             </CardContent>
           </Card>
@@ -60,22 +69,35 @@ const WalletAuth = () => {
 
         {/* CTA */}
         <div className="text-center">
-          <Card className="max-w-md mx-auto">
+          <Card className="max-w-md mx-auto bg-slate-800/70 border-slate-600 backdrop-blur-sm slide-up" style={{ animationDelay: '0.3s' }}>
             <CardHeader>
-              <CardTitle>Get Started</CardTitle>
-              <CardDescription>
-                Join millions of users who trust PayPal Wallet
+              <CardTitle className="text-white text-2xl">Enter the Dark Side</CardTitle>
+              <CardDescription className="text-gray-400">
+                Join thousands who chose privacy and security
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <Link to="/auth">
-                <Button className="w-full" size="lg">
-                  Sign In / Create Account
+                <Button className="w-full h-12 blue-gradient hover:scale-105 transition-all duration-300 text-white font-semibold text-lg shadow-lg hover:shadow-blue-500/25" size="lg">
+                  Access Wallet
                 </Button>
               </Link>
-              <p className="text-sm text-gray-500">
-                Free to sign up • No monthly fees • Instant transfers
-              </p>
+              <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
+                <span className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span>Free signup</span>
+                </span>
+                <span>•</span>
+                <span className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span>No monthly fees</span>
+                </span>
+                <span>•</span>
+                <span className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                  <span>Anonymous</span>
+                </span>
+              </div>
             </CardContent>
           </Card>
         </div>
