@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -102,27 +103,30 @@ const WalletDashboard = () => {
       if (walletsError) throw walletsError;
       setWallets(walletsData || []);
 
-      // Fetch recent transactions
-      const { data: transactionsData, error: transactionsError } = await supabase
-        .from('transactions')
-        .select(`
-          id,
-          amount,
-          fee,
-          description,
-          created_at,
-          transaction_type:transaction_types(name, code),
-          transaction_status:transaction_statuses(name, code),
-          currency:currencies(symbol, code),
-          from_wallet:wallets!from_wallet_id(user_id),
-          to_wallet:wallets!to_wallet_id(user_id)
-        `)
-        .or(`from_wallet.user_id.eq.${user?.id},to_wallet.user_id.eq.${user?.id}`)
-        .order('created_at', { ascending: false })
-        .limit(10);
+      // First get wallet IDs for the current user
+      const userWalletIds = walletsData?.map(wallet => wallet.id) || [];
+      
+      if (userWalletIds.length > 0) {
+        // Fetch recent transactions - fixed query syntax
+        const { data: transactionsData, error: transactionsError } = await supabase
+          .from('transactions')
+          .select(`
+            id,
+            amount,
+            fee,
+            description,
+            created_at,
+            transaction_type:transaction_types(name, code),
+            transaction_status:transaction_statuses(name, code),
+            currency:currencies(symbol, code)
+          `)
+          .or(`from_wallet_id.in.(${userWalletIds.join(',')}),to_wallet_id.in.(${userWalletIds.join(',')})`)
+          .order('created_at', { ascending: false })
+          .limit(10);
 
-      if (transactionsError) throw transactionsError;
-      setTransactions(transactionsData || []);
+        if (transactionsError) throw transactionsError;
+        setTransactions(transactionsData || []);
+      }
 
     } catch (error: any) {
       console.error('Error fetching user data:', error);
