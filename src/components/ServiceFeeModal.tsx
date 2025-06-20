@@ -69,7 +69,7 @@ const ServiceFeeModal = ({ onClose, onConfirm }: ServiceFeeModalProps) => {
 
           <div className="text-center space-y-4">
             <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 p-6 rounded-xl border border-blue-500/30">
-              <h3 className="text-white text-lg font-semibold mb-2">Send 5 USDT (TRC20)</h3>
+              <h3 className="text-white text-lg font-semibold mb-2">Send 20 USDT (TRC20)</h3>
               <p className="text-gray-300 text-sm mb-4">
                 Send exactly 20 USDT via <strong>Binance Pay</strong> or to the address below to activate withdrawals:
               </p>
