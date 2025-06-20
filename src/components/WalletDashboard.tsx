@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,7 +43,13 @@ const WalletDashboard = () => {
           .single();
 
         if (profileError) {
-          throw profileError;
+          console.error("Profile fetch error:", profileError);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to load profile data.",
+          });
+          return;
         }
 
         setProfile(profileData);
@@ -92,7 +99,7 @@ const WalletDashboard = () => {
         throw error;
       }
 
-      setProfile(prev => ({ ...prev, full_name: updatedFullName }));
+      setProfile(prev => prev ? { ...prev, full_name: updatedFullName } : null);
       setIsEditing(false);
       toast({
         title: "Profile Updated",
