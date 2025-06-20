@@ -121,7 +121,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen dark-gradient flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md fade-in">
         {/* Back Button */}
         <Link to="/" className="inline-flex items-center text-gray-400 hover:text-blue-400 transition-colors mb-6">
@@ -138,7 +138,7 @@ const Auth = () => {
             </div>
             <div className="text-left">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-white bg-clip-text text-transparent">
-                Rolland
+                Rolland PayPal
               </h1>
               <p className="text-blue-300 text-sm">Digital Wallet</p>
             </div>
@@ -146,7 +146,7 @@ const Auth = () => {
           <p className="text-gray-400">Access your secure digital wallet</p>
         </div>
 
-        <Card className="bg-slate-800/70 border-slate-600 backdrop-blur-sm shadow-2xl overflow-hidden">
+        <Card className="bg-gray-800 border-gray-700 backdrop-blur-sm shadow-2xl overflow-hidden">
           <CardHeader className="text-center pb-6">
             <CardTitle className="text-white text-2xl font-semibold">
               {isSignUp ? 'Create Your Wallet' : 'Welcome Back'}
@@ -175,7 +175,7 @@ const Auth = () => {
                     type="text"
                     value={formData.fullName}
                     onChange={(e) => handleInputChange('fullName', e.target.value)}
-                    className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-500 focus:border-blue-500 h-12"
+                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-blue-500 h-12"
                     placeholder="Enter your full name"
                     required={isSignUp}
                   />
@@ -193,7 +193,7 @@ const Auth = () => {
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-500 focus:border-blue-500 h-12"
+                  className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-blue-500 h-12"
                   placeholder="Enter your email"
                   required
                 />
@@ -211,7 +211,7 @@ const Auth = () => {
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={(e) => handleInputChange('password', e.target.value)}
-                    className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-500 focus:border-blue-500 h-12 pr-12"
+                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-blue-500 h-12 pr-12"
                     placeholder={isSignUp ? "Create a strong password" : "Enter your password"}
                     required
                   />
@@ -240,7 +240,7 @@ const Auth = () => {
                       type={showConfirmPassword ? "text" : "password"}
                       value={formData.confirmPassword}
                       onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                      className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-500 focus:border-blue-500 h-12 pr-12"
+                      className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus:border-blue-500 h-12 pr-12"
                       placeholder="Confirm your password"
                       required={isSignUp}
                     />
@@ -258,7 +258,7 @@ const Auth = () => {
               {/* Submit Button */}
               <Button
                 type="submit"
-                className="w-full h-12 blue-gradient hover:scale-105 transition-all duration-300 text-white font-semibold text-lg shadow-lg hover:shadow-blue-500/25"
+                className="w-full h-12 bg-blue-600 hover:bg-blue-700 hover:scale-105 transition-all duration-300 text-white font-semibold text-lg shadow-lg"
                 disabled={loading}
               >
                 {loading 
@@ -269,7 +269,7 @@ const Auth = () => {
             </form>
 
             {/* Toggle Mode */}
-            <div className="text-center pt-4 border-t border-slate-700">
+            <div className="text-center pt-4 border-t border-gray-700">
               <p className="text-gray-400 mb-3">
                 {isSignUp ? 'Already have an account?' : "Don't have an account?"}
               </p>
@@ -287,7 +287,7 @@ const Auth = () => {
 
         <div className="text-center mt-6">
           <p className="text-xs text-gray-500">
-            By accessing Rolland Digital Wallet, you agree to our privacy-first approach to digital finance.
+            By accessing Rolland PayPal Digital Wallet, you agree to our privacy-first approach to digital finance.
           </p>
         </div>
       </div>

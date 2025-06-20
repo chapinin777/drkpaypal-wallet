@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -118,42 +117,42 @@ const WalletDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-900 text-white">
       {/* Desktop Header */}
-      <div className="hidden md:block bg-white border-b border-gray-200 px-6 py-4">
+      <div className="hidden md:block bg-gray-800 border-b border-gray-700 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <Wallet className="h-8 w-8 text-blue-600" />
+              <Wallet className="h-8 w-8 text-blue-400" />
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full"></div>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Rolland</h1>
-              <p className="text-xs text-gray-500">Digital Wallet</p>
+              <h1 className="text-xl font-bold text-white">Rolland PayPal</h1>
+              <p className="text-xs text-gray-400">Digital Wallet</p>
             </div>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 rounded-full">
+              <Button variant="ghost" className="h-8 w-8 rounded-full hover:bg-gray-700">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={profile?.avatar_url || `https://avatar.vercel.sh/${user?.email}.png`} alt={profile?.full_name || user?.email || "Avatar"} />
-                  <AvatarFallback>{profile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback className="bg-gray-700 text-white">{profile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700 text-white">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setIsEditing(true)}>
+              <DropdownMenuSeparator className="bg-gray-700" />
+              <DropdownMenuItem onClick={() => setIsEditing(true)} className="hover:bg-gray-700">
                 <User className="mr-2 h-4 w-4" />
                 <span>Edit Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem className="hover:bg-gray-700">
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSignOut}>
+              <DropdownMenuSeparator className="bg-gray-700" />
+              <DropdownMenuItem onClick={handleSignOut} className="hover:bg-gray-700">
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
@@ -163,34 +162,34 @@ const WalletDashboard = () => {
       </div>
 
       {/* Mobile Header */}
-      <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3">
+      <div className="md:hidden bg-gray-800 border-b border-gray-700 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Wallet className="h-6 w-6 text-blue-600" />
-            <span className="text-lg font-bold text-gray-900">Rolland</span>
+            <Wallet className="h-6 w-6 text-blue-400" />
+            <span className="text-lg font-bold text-white">Rolland</span>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 rounded-full">
+              <Button variant="ghost" className="h-8 w-8 rounded-full hover:bg-gray-700">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={profile?.avatar_url || `https://avatar.vercel.sh/${user?.email}.png`} alt={profile?.full_name || user?.email || "Avatar"} />
-                  <AvatarFallback>{profile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback className="bg-gray-700 text-white">{profile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700 text-white">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setIsEditing(true)}>
+              <DropdownMenuSeparator className="bg-gray-700" />
+              <DropdownMenuItem onClick={() => setIsEditing(true)} className="hover:bg-gray-700">
                 <User className="mr-2 h-4 w-4" />
                 <span>Edit Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem className="hover:bg-gray-700">
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSignOut}>
+              <DropdownMenuSeparator className="bg-gray-700" />
+              <DropdownMenuItem onClick={handleSignOut} className="hover:bg-gray-700">
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
@@ -203,25 +202,25 @@ const WalletDashboard = () => {
       <div className="max-w-6xl mx-auto py-6 px-4 md:px-6">
         {/* Edit Profile Modal */}
         {isEditing && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border border-gray-700 w-96 shadow-lg rounded-md bg-gray-800">
               <div className="mt-3 text-center">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">Edit Profile</h3>
+                <h3 className="text-lg leading-6 font-medium text-white">Edit Profile</h3>
                 <div className="mt-2 px-7 py-3">
-                  <Label htmlFor="fullName" className="block text-sm font-medium text-gray-700">Full Name</Label>
+                  <Label htmlFor="fullName" className="block text-sm font-medium text-gray-300">Full Name</Label>
                   <Input
                     type="text"
                     id="fullName"
                     value={updatedFullName}
                     onChange={(e) => setUpdatedFullName(e.target.value)}
-                    className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                    className="mt-1 bg-gray-700 border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm rounded-md"
                   />
                 </div>
                 <div className="items-center px-4 py-3">
                   <Button
                     onClick={handleUpdateProfile}
                     disabled={loading}
-                    className="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     {loading ? 'Updating...' : 'Update Profile'}
                   </Button>
@@ -229,7 +228,7 @@ const WalletDashboard = () => {
                     variant="ghost"
                     onClick={() => setIsEditing(false)}
                     disabled={loading}
-                    className="mt-3 px-4 py-2 text-gray-700 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    className="mt-3 px-4 py-2 text-gray-300 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
                   >
                     Cancel
                   </Button>
@@ -242,22 +241,22 @@ const WalletDashboard = () => {
         {/* Dashboard Content */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Balance Card */}
-          <Card className="bg-white shadow-md">
+          <Card className="bg-gray-800 border-gray-700 shadow-md">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">Account Balance</CardTitle>
-              <CardDescription>Available funds in your wallet</CardDescription>
+              <CardTitle className="text-lg font-semibold text-white">Account Balance</CardTitle>
+              <CardDescription className="text-gray-300">Available funds in your wallet</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-blue-600">$0.00</div>
-              <p className="text-sm text-gray-500">Last updated: Now</p>
+              <div className="text-3xl font-bold text-blue-400">$0.00</div>
+              <p className="text-sm text-gray-400">Last updated: Now</p>
             </CardContent>
           </Card>
 
           {/* Send Money */}
-          <Card className="bg-white shadow-md">
+          <Card className="bg-gray-800 border-gray-700 shadow-md">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">Send Money</CardTitle>
-              <CardDescription>Transfer funds to another account</CardDescription>
+              <CardTitle className="text-lg font-semibold text-white">Send Money</CardTitle>
+              <CardDescription className="text-gray-300">Transfer funds to another account</CardDescription>
             </CardHeader>
             <CardContent>
               <Button className="w-full bg-green-600 text-white hover:bg-green-700">
@@ -268,13 +267,13 @@ const WalletDashboard = () => {
           </Card>
 
           {/* Recent Transactions */}
-          <Card className="bg-white shadow-md">
+          <Card className="bg-gray-800 border-gray-700 shadow-md">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">Recent Transactions</CardTitle>
-              <CardDescription>Your latest transactions</CardDescription>
+              <CardTitle className="text-lg font-semibold text-white">Recent Transactions</CardTitle>
+              <CardDescription className="text-gray-300">Your latest transactions</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-500">No recent transactions.</p>
+              <p className="text-gray-400">No recent transactions.</p>
             </CardContent>
           </Card>
         </div>
