@@ -5,34 +5,35 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
-import { Wallet, ArrowLeft } from 'lucide-react';
+import { Wallet, ArrowLeft, User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const Auth = () => {
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [signInData, setSignInData] = useState({
-    email: '',
-    password: '',
-  });
-
-  const [signUpData, setSignUpData] = useState({
+  const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
     fullName: '',
   });
 
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { error } = await signIn(signInData.email, signInData.password);
+      const { error } = await signIn(formData.email, formData.password);
       
       if (error) {
         toast({
@@ -61,7 +62,7 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (signUpData.password !== signUpData.confirmPassword) {
+    if (formData.password !== formData.confirmPassword) {
       toast({
         variant: "destructive",
         title: "Password Mismatch",
@@ -70,7 +71,7 @@ const Auth = () => {
       return;
     }
 
-    if (signUpData.password.length < 6) {
+    if (formData.password.length < 6) {
       toast({
         variant: "destructive",
         title: "Weak Password",
@@ -82,7 +83,7 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await signUp(signUpData.email, signUpData.password, signUpData.fullName);
+      const { error } = await signUp(formData.email, formData.password, formData.fullName);
       
       if (error) {
         toast({
@@ -107,6 +108,18 @@ const Auth = () => {
     }
   };
 
+  const toggleMode = () => {
+    setIsSignUp(!isSignUp);
+    setFormData({
+      email: '',
+      password: '',
+      confirmPassword: '',
+      fullName: '',
+    });
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  };
+
   return (
     <div className="min-h-screen dark-gradient flex items-center justify-center p-4">
       <div className="w-full max-w-md fade-in">
@@ -125,7 +138,7 @@ const Auth = () => {
             </div>
             <div className="text-left">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-white bg-clip-text text-transparent">
-                DrkPaypal
+                Rolland PayPal
               </h1>
               <p className="text-blue-300 text-sm">Wallet</p>
             </div>
@@ -133,126 +146,148 @@ const Auth = () => {
           <p className="text-gray-400">Access your secure digital wallet</p>
         </div>
 
-        <Card className="bg-slate-800/70 border-slate-600 backdrop-blur-sm shadow-2xl">
-          <CardHeader className="text-center">
-            <CardTitle className="text-white text-xl">Welcome</CardTitle>
-            <CardDescription className="text-gray-400">
-              Sign in to your account or create a new one
+        <Card className="bg-slate-800/70 border-slate-600 backdrop-blur-sm shadow-2xl overflow-hidden">
+          <CardHeader className="text-center pb-6">
+            <CardTitle className="text-white text-2xl font-semibold">
+              {isSignUp ? 'Create Your Wallet' : 'Welcome Back'}
+            </CardTitle>
+            <CardDescription className="text-gray-400 text-base">
+              {isSignUp 
+                ? 'Join thousands who trust Rolland PayPal' 
+                : 'Sign in to access your digital wallet'
+              }
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-slate-700/50 border-slate-600">
-                <TabsTrigger value="signin" className="text-gray-300 data-[state=active]:text-white data-[state=active]:bg-blue-600">
-                  Sign In
-                </TabsTrigger>
-                <TabsTrigger value="signup" className="text-gray-300 data-[state=active]:text-white data-[state=active]:bg-blue-600">
-                  Sign Up
-                </TabsTrigger>
-              </TabsList>
+          
+          <CardContent className="space-y-6">
+            <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-5">
+              {/* Full Name Field - Only for Sign Up */}
+              <div className={`transition-all duration-300 ease-in-out ${
+                isSignUp ? 'opacity-100 max-h-20' : 'opacity-0 max-h-0 overflow-hidden'
+              }`}>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName" className="text-gray-300 flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Full Name
+                  </Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    value={formData.fullName}
+                    onChange={(e) => handleInputChange('fullName', e.target.value)}
+                    className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-500 focus:border-blue-500 h-12"
+                    placeholder="Enter your full name"
+                    required={isSignUp}
+                  />
+                </div>
+              </div>
 
-              <TabsContent value="signin" className="space-y-4 mt-6">
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-email" className="text-gray-300">Email</Label>
-                    <Input
-                      id="signin-email"
-                      type="email"
-                      value={signInData.email}
-                      onChange={(e) => setSignInData({ ...signInData, email: e.target.value })}
-                      className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-500 focus:border-blue-500"
-                      placeholder="Enter your email"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-password" className="text-gray-300">Password</Label>
-                    <Input
-                      id="signin-password"
-                      type="password"
-                      value={signInData.password}
-                      onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
-                      className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-500 focus:border-blue-500"
-                      placeholder="Enter your password"
-                      required
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full h-11 blue-gradient hover:scale-105 transition-all duration-300 text-white font-semibold"
-                    disabled={loading}
+              {/* Email Field */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-gray-300 flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Email Address
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-500 focus:border-blue-500 h-12"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+
+              {/* Password Field */}
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-gray-300 flex items-center gap-2">
+                  <Lock className="h-4 w-4" />
+                  Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-500 focus:border-blue-500 h-12 pr-12"
+                    placeholder={isSignUp ? "Create a strong password" : "Enter your password"}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-400 transition-colors"
                   >
-                    {loading ? 'Signing In...' : 'Access Wallet'}
-                  </Button>
-                </form>
-              </TabsContent>
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
 
-              <TabsContent value="signup" className="space-y-4 mt-6">
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name" className="text-gray-300">Full Name</Label>
+              {/* Confirm Password Field - Only for Sign Up */}
+              <div className={`transition-all duration-300 ease-in-out ${
+                isSignUp ? 'opacity-100 max-h-20' : 'opacity-0 max-h-0 overflow-hidden'
+              }`}>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-gray-300 flex items-center gap-2">
+                    <Lock className="h-4 w-4" />
+                    Confirm Password
+                  </Label>
+                  <div className="relative">
                     <Input
-                      id="signup-name"
-                      type="text"
-                      value={signUpData.fullName}
-                      onChange={(e) => setSignUpData({ ...signUpData, fullName: e.target.value })}
-                      className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-500 focus:border-blue-500"
-                      placeholder="Enter your full name"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email" className="text-gray-300">Email</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      value={signUpData.email}
-                      onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
-                      className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-500 focus:border-blue-500"
-                      placeholder="Enter your email"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password" className="text-gray-300">Password</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      value={signUpData.password}
-                      onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
-                      className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-500 focus:border-blue-500"
-                      placeholder="Create a password"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-confirm" className="text-gray-300">Confirm Password</Label>
-                    <Input
-                      id="signup-confirm"
-                      type="password"
-                      value={signUpData.confirmPassword}
-                      onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })}
-                      className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-500 focus:border-blue-500"
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                      className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-500 focus:border-blue-500 h-12 pr-12"
                       placeholder="Confirm your password"
-                      required
+                      required={isSignUp}
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-400 transition-colors"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
-                  <Button
-                    type="submit"
-                    className="w-full h-11 blue-gradient hover:scale-105 transition-all duration-300 text-white font-semibold"
-                    disabled={loading}
-                  >
-                    {loading ? 'Creating Account...' : 'Create Wallet'}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                className="w-full h-12 blue-gradient hover:scale-105 transition-all duration-300 text-white font-semibold text-lg shadow-lg hover:shadow-blue-500/25"
+                disabled={loading}
+              >
+                {loading 
+                  ? (isSignUp ? 'Creating Account...' : 'Signing In...') 
+                  : (isSignUp ? 'Create Wallet' : 'Access Wallet')
+                }
+              </Button>
+            </form>
+
+            {/* Toggle Mode */}
+            <div className="text-center pt-4 border-t border-slate-700">
+              <p className="text-gray-400 mb-3">
+                {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={toggleMode}
+                className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-all duration-200 font-medium"
+              >
+                {isSignUp ? 'Sign In Instead' : 'Create New Account'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
         <div className="text-center mt-6">
           <p className="text-xs text-gray-500">
-            By accessing DrkPaypal Wallet, you agree to our privacy-first approach to digital finance.
+            By accessing Rolland PayPal Wallet, you agree to our privacy-first approach to digital finance.
           </p>
         </div>
       </div>
