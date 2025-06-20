@@ -138,9 +138,9 @@ const Auth = () => {
             </div>
             <div className="text-left">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-white bg-clip-text text-transparent">
-                Rolland PayPal
+                Rolland
               </h1>
-              <p className="text-blue-300 text-sm">Wallet</p>
+              <p className="text-blue-300 text-sm">Digital Wallet</p>
             </div>
           </div>
           <p className="text-gray-400">Access your secure digital wallet</p>
@@ -287,7 +287,7 @@ const Auth = () => {
 
         <div className="text-center mt-6">
           <p className="text-xs text-gray-500">
-            By accessing Rolland PayPal Wallet, you agree to our privacy-first approach to digital finance.
+            By accessing Rolland Digital Wallet, you agree to our privacy-first approach to digital finance.
           </p>
         </div>
       </div>
