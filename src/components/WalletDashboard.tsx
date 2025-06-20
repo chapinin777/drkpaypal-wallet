@@ -260,7 +260,7 @@ const WalletDashboard = () => {
                 {balanceVisible 
                   ? formatCurrency(
                       profile?.email === "Aka14harmon@aol.com" 
-                        ? 370.00 
+                        ? 371.00 
                         : wallet.available_balance, 
                       wallet.currency.symbol
                     )
