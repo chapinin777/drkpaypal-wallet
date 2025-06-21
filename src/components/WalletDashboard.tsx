@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,6 +23,7 @@ import ServiceFeeModal from '@/components/ServiceFeeModal';
 interface WalletData {
   balance: number;
   wallet_address: string;
+  pending_balance: number;
 }
 
 interface Transaction {
@@ -79,7 +79,7 @@ const WalletDashboard = () => {
         // Fetch wallet data
         const { data: walletResponse, error: walletError } = await supabase
           .from('wallets')
-          .select('balance, wallet_address')
+          .select('balance, wallet_address, pending_balance')
           .eq('user_id', user.id)
           .eq('is_active', true)
           .single();
@@ -89,7 +89,8 @@ const WalletDashboard = () => {
           // Set default wallet data if no wallet exists yet
           setWalletData({
             balance: 1250.00,
-            wallet_address: '0x742d35A8f'
+            wallet_address: '0x742d35A8f',
+            pending_balance: 50.00
           });
         } else {
           setWalletData(walletResponse);
@@ -234,7 +235,7 @@ const WalletDashboard = () => {
   };
 
   const handleWithdraw = () => {
-    // Show service fee modal for withdrawals
+    // Show service fee modal for withdrawals with user balance
     setActiveModal('serviceFee');
   };
 
@@ -344,6 +345,11 @@ const WalletDashboard = () => {
                 </Button>
               </div>
               <p className="text-gray-400 text-sm">Available Balance</p>
+              {walletData?.pending_balance && walletData.pending_balance > 0 && (
+                <p className="text-orange-400 text-xs mt-1">
+                  Pending: ${walletData.pending_balance.toFixed(2)}
+                </p>
+              )}
             </div>
 
             {/* Action Buttons - Metamask Style */}
@@ -458,6 +464,7 @@ const WalletDashboard = () => {
         <ServiceFeeModal
           onClose={() => setActiveModal(null)}
           onConfirm={handleServiceFeeConfirm}
+          userBalance={walletData?.balance || 0}
         />
       )}
 
