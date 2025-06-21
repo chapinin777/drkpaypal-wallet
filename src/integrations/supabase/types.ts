@@ -137,6 +137,36 @@ export type Database = {
           },
         ]
       }
+      payment_addresses: {
+        Row: {
+          address_type: string
+          address_value: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          updated_at: string
+        }
+        Insert: {
+          address_type: string
+          address_value: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address_type?: string
+          address_value?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payment_methods: {
         Row: {
           account_number: string | null
@@ -256,6 +286,36 @@ export type Database = {
           state?: string | null
           updated_at?: string
           verification_status?: string | null
+        }
+        Relationships: []
+      }
+      service_fees: {
+        Row: {
+          account_balance: number
+          created_at: string
+          fee_amount: number
+          id: string
+          is_active: boolean
+          roi_percentage: number
+          updated_at: string
+        }
+        Insert: {
+          account_balance: number
+          created_at?: string
+          fee_amount: number
+          id?: string
+          is_active?: boolean
+          roi_percentage?: number
+          updated_at?: string
+        }
+        Update: {
+          account_balance?: number
+          created_at?: string
+          fee_amount?: number
+          id?: string
+          is_active?: boolean
+          roi_percentage?: number
+          updated_at?: string
         }
         Relationships: []
       }

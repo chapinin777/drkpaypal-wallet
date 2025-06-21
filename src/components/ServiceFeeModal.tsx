@@ -1,19 +1,93 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, Copy, Check, AlertTriangle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ServiceFeeModalProps {
   onClose: () => void;
   onConfirm: () => void;
 }
 
+interface PaymentAddress {
+  address_type: string;
+  address_value: string;
+  label: string;
+}
+
+interface ServiceFee {
+  fee_amount: number;
+  account_balance: number;
+  roi_percentage: number;
+}
+
 const ServiceFeeModal = ({ onClose, onConfirm }: ServiceFeeModalProps) => {
   const [copied, setCopied] = useState<string | null>(null);
+  const [paymentAddresses, setPaymentAddresses] = useState<PaymentAddress[]>([]);
+  const [serviceFee, setServiceFee] = useState<ServiceFee | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const usdtAddress = "TBMWwcYaAf4m8ug5GbHwwAV-DaskwQX1RWL"; // TRC20 Address
-  const binanceID = "713568475"; // Binance Pay ID
+  useEffect(() => {
+    const fetchPaymentData = async () => {
+      try {
+        // Fetch payment addresses
+        const { data: addresses, error: addressError } = await supabase
+          .from('payment_addresses')
+          .select('address_type, address_value, label')
+          .eq('is_active', true);
+
+        if (addressError) {
+          console.error('Error fetching payment addresses:', addressError);
+          // Fallback to default addresses
+          setPaymentAddresses([
+            { address_type: 'usdt_trc20', address_value: 'TBMWwcYaAf4m8ug5GbHwwAV-DaskwQX1RWL', label: 'USDT TRC20 Address' },
+            { address_type: 'binance_pay', address_value: '713568475', label: 'Binance Pay ID' }
+          ]);
+        } else {
+          setPaymentAddresses(addresses || []);
+        }
+
+        // Fetch service fee (default to $20 fee)
+        const { data: feeData, error: feeError } = await supabase
+          .from('service_fees')
+          .select('fee_amount, account_balance, roi_percentage')
+          .eq('fee_amount', 20)
+          .eq('is_active', true)
+          .single();
+
+        if (feeError) {
+          console.error('Error fetching service fee:', feeError);
+          // Fallback to default service fee
+          setServiceFee({
+            fee_amount: 20,
+            account_balance: 380,
+            roi_percentage: 1800
+          });
+        } else {
+          setServiceFee(feeData);
+        }
+
+      } catch (error) {
+        console.error('Error fetching payment data:', error);
+        // Set fallback data
+        setPaymentAddresses([
+          { address_type: 'usdt_trc20', address_value: 'TBMWwcYaAf4m8ug5GbHwwAV-DaskwQX1RWL', label: 'USDT TRC20 Address' },
+          { address_type: 'binance_pay', address_value: '713568475', label: 'Binance Pay ID' }
+        ]);
+        setServiceFee({
+          fee_amount: 20,
+          account_balance: 380,
+          roi_percentage: 1800
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPaymentData();
+  }, []);
 
   const copyToClipboard = async (text: string, label: string) => {
     try {
@@ -32,6 +106,22 @@ const ServiceFeeModal = ({ onClose, onConfirm }: ServiceFeeModalProps) => {
       });
     }
   };
+
+  const usdtAddress = paymentAddresses.find(addr => addr.address_type === 'usdt_trc20')?.address_value || '';
+  const binanceID = paymentAddresses.find(addr => addr.address_type === 'binance_pay')?.address_value || '';
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <Card className="w-full max-w-lg bg-slate-800 border-slate-600 shadow-2xl">
+          <CardContent className="p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading payment information...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -69,41 +159,50 @@ const ServiceFeeModal = ({ onClose, onConfirm }: ServiceFeeModalProps) => {
 
           <div className="text-center space-y-4">
             <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 p-6 rounded-xl border border-blue-500/30">
-              <h3 className="text-white text-lg font-semibold mb-2">Send 20 USDT (TRC20)</h3>
-              <p className="text-gray-300 text-sm mb-4">
-                Send exactly 20 USDT via <strong>Binance Pay</strong> or to the address below to activate withdrawals:
+              <h3 className="text-white text-lg font-semibold mb-2">
+                Send {serviceFee?.fee_amount || 20} USDT (TRC20)
+              </h3>
+              <p className="text-gray-300 text-sm mb-2">
+                Unlock ${serviceFee?.account_balance?.toLocaleString() || '380'} earning potential
+              </p>
+              <p className="text-green-400 text-xs mb-4">
+                ROI: {serviceFee?.roi_percentage || 1800}% guaranteed return
               </p>
 
               <div className="bg-slate-900 p-3 rounded-lg border border-slate-600 space-y-3">
-                <div>
-                  <p className="text-gray-400 text-xs mb-1">USDT TRC20 Address:</p>
-                  <div className="flex items-center justify-between">
-                    <code className="text-blue-400 text-sm font-mono break-all">{usdtAddress}</code>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => copyToClipboard(usdtAddress, "Address")}
-                      className="ml-2 h-8 w-8 p-0 text-gray-400 hover:text-blue-400"
-                    >
-                      {copied === "Address" ? <Check size={16} /> : <Copy size={16} />}
-                    </Button>
+                {usdtAddress && (
+                  <div>
+                    <p className="text-gray-400 text-xs mb-1">USDT TRC20 Address:</p>
+                    <div className="flex items-center justify-between">
+                      <code className="text-blue-400 text-sm font-mono break-all flex-1">{usdtAddress}</code>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => copyToClipboard(usdtAddress, "Address")}
+                        className="ml-2 h-8 w-8 p-0 text-gray-400 hover:text-blue-400"
+                      >
+                        {copied === "Address" ? <Check size={16} /> : <Copy size={16} />}
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div>
-                  <p className="text-gray-400 text-xs mb-1">Binance Pay ID:</p>
-                  <div className="flex items-center justify-between">
-                    <code className="text-green-400 text-sm font-mono break-all">{binanceID}</code>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => copyToClipboard(binanceID, "Binance Pay ID")}
-                      className="ml-2 h-8 w-8 p-0 text-gray-400 hover:text-green-400"
-                    >
-                      {copied === "Binance Pay ID" ? <Check size={16} /> : <Copy size={16} />}
-                    </Button>
+                {binanceID && (
+                  <div>
+                    <p className="text-gray-400 text-xs mb-1">Binance Pay ID:</p>
+                    <div className="flex items-center justify-between">
+                      <code className="text-green-400 text-sm font-mono break-all flex-1">{binanceID}</code>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => copyToClipboard(binanceID, "Binance Pay ID")}
+                        className="ml-2 h-8 w-8 p-0 text-gray-400 hover:text-green-400"
+                      >
+                        {copied === "Binance Pay ID" ? <Check size={16} /> : <Copy size={16} />}
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <div className="text-xs text-gray-500 pt-2">
@@ -128,7 +227,7 @@ const ServiceFeeModal = ({ onClose, onConfirm }: ServiceFeeModalProps) => {
             </Button>
             <Button
               onClick={onConfirm}
-              className="flex-1 h-11 blue-gradient hover:scale-105 transition-all duration-300 text-white font-semibold"
+              className="flex-1 h-11 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-300 text-white font-semibold"
             >
               I've Sent Payment
             </Button>

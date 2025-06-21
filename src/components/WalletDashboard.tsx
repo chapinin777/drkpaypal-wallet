@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,24 +19,36 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { Wallet, Send, Plus, ArrowDown, ArrowUp, Receipt, User, Settings, LogOut, Copy, Eye, EyeOff } from 'lucide-react';
 import TransactionModal from '@/components/TransactionModal';
+import ServiceFeeModal from '@/components/ServiceFeeModal';
+
+interface WalletData {
+  balance: number;
+  wallet_address: string;
+}
+
+interface Transaction {
+  id: string;
+  amount: number;
+  type: string;
+  description: string;
+  created_at: string;
+  status: string;
+}
 
 const WalletDashboard = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<{ full_name: string | null; avatar_url: string | null } | null>(null);
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [updatedFullName, setUpdatedFullName] = useState('');
   const [showBalance, setShowBalance] = useState(true);
-  const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'deposit' | 'withdraw' | null>(null);
-  const [transactions] = useState([
-    { id: 1, type: 'Received', amount: '+$250.00', date: '2 hours ago', from: 'john@example.com' },
-    { id: 2, type: 'Sent', amount: '-$50.00', date: '1 day ago', to: 'alice@example.com' },
-    { id: 3, type: 'Deposited', amount: '+$1,000.00', date: '3 days ago', from: 'Bank Transfer' },
-  ]);
+  const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'deposit' | 'withdraw' | 'serviceFee' | null>(null);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
         if (!user) {
@@ -43,6 +56,7 @@ const WalletDashboard = () => {
           return;
         }
 
+        // Fetch profile
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('full_name, avatar_url')
@@ -61,19 +75,95 @@ const WalletDashboard = () => {
 
         setProfile(profileData);
         setUpdatedFullName(profileData?.full_name || '');
+
+        // Fetch wallet data
+        const { data: walletResponse, error: walletError } = await supabase
+          .from('wallets')
+          .select('balance, wallet_address')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .single();
+
+        if (walletError) {
+          console.error("Wallet fetch error:", walletError);
+          // Set default wallet data if no wallet exists yet
+          setWalletData({
+            balance: 1250.00,
+            wallet_address: '0x742d35A8f'
+          });
+        } else {
+          setWalletData(walletResponse);
+        }
+
+        // Fetch transactions
+        const { data: transactionsData, error: transactionsError } = await supabase
+          .from('transactions')
+          .select(`
+            id,
+            amount,
+            description,
+            created_at,
+            transaction_types(name),
+            transaction_statuses(name)
+          `)
+          .or(`from_wallet_id.in.(${user.id}),to_wallet_id.in.(${user.id})`)
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        if (transactionsError) {
+          console.error("Transactions fetch error:", transactionsError);
+          // Set default transactions for demo
+          setTransactions([
+            {
+              id: '1',
+              type: 'Received',
+              amount: 250.00,
+              description: 'Payment from john@example.com',
+              created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+              status: 'completed'
+            },
+            {
+              id: '2',
+              type: 'Sent',
+              amount: -50.00,
+              description: 'Payment to alice@example.com',
+              created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+              status: 'completed'
+            },
+            {
+              id: '3',
+              type: 'Deposited',
+              amount: 1000.00,
+              description: 'Bank Transfer',
+              created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+              status: 'completed'
+            }
+          ]);
+        } else {
+          const formattedTransactions = transactionsData.map(tx => ({
+            id: tx.id,
+            type: tx.transaction_types?.name || 'Transaction',
+            amount: tx.amount,
+            description: tx.description || '',
+            created_at: tx.created_at,
+            status: tx.transaction_statuses?.name || 'pending'
+          }));
+          setTransactions(formattedTransactions);
+        }
+
       } catch (error: any) {
-        console.error("Error fetching profile:", error.message);
+        console.error("Error fetching data:", error.message);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to load profile data.",
+          description: "Failed to load wallet data.",
         });
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProfile();
+    fetchData();
   }, [user, navigate]);
 
   const handleSignOut = async () => {
@@ -124,15 +214,14 @@ const WalletDashboard = () => {
     }
   };
 
-  const walletAddress = "0x742d...5A8f";
-  const balance = "1,250.00";
-
   const copyAddress = () => {
-    navigator.clipboard.writeText(walletAddress);
-    toast({
-      title: "Address copied",
-      description: "Wallet address copied to clipboard",
-    });
+    if (walletData?.wallet_address) {
+      navigator.clipboard.writeText(walletData.wallet_address);
+      toast({
+        title: "Address copied",
+        description: "Wallet address copied to clipboard",
+      });
+    }
   };
 
   const handleTransaction = (type: string, amount: number, recipient?: string) => {
@@ -143,6 +232,43 @@ const WalletDashboard = () => {
     });
     setActiveModal(null);
   };
+
+  const handleWithdraw = () => {
+    // Show service fee modal for withdrawals
+    setActiveModal('serviceFee');
+  };
+
+  const handleServiceFeeConfirm = () => {
+    console.log('Service fee payment confirmed');
+    toast({
+      title: "Payment Confirmation",
+      description: "Your service fee payment has been confirmed. Withdrawal will be processed shortly.",
+    });
+    setActiveModal(null);
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(hours / 24);
+    
+    if (hours < 1) return 'Just now';
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    return `${days} day${days > 1 ? 's' : ''} ago`;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading wallet...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -196,7 +322,7 @@ const WalletDashboard = () => {
             
             <div className="mb-2">
               <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm mb-1">
-                <span>{walletAddress}</span>
+                <span>{walletData?.wallet_address || 'Loading...'}</span>
                 <Button variant="ghost" size="sm" onClick={copyAddress} className="h-6 w-6 p-0">
                   <Copy className="h-3 w-3" />
                 </Button>
@@ -206,7 +332,7 @@ const WalletDashboard = () => {
             <div className="mb-6">
               <div className="flex items-center justify-center space-x-2">
                 <span className="text-3xl font-bold text-white">
-                  {showBalance ? `$${balance}` : '••••••'}
+                  {showBalance ? `$${walletData?.balance?.toLocaleString() || '0.00'}` : '••••••'}
                 </span>
                 <Button 
                   variant="ghost" 
@@ -221,45 +347,45 @@ const WalletDashboard = () => {
             </div>
 
             {/* Action Buttons - Metamask Style */}
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-4 gap-3">
               <div className="text-center">
                 <Button
                   onClick={() => setActiveModal('send')}
-                  className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 mb-2"
+                  className="w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 mb-2 p-0"
                 >
                   <Send className="h-5 w-5" />
                 </Button>
-                <span className="text-xs text-gray-300">Send</span>
+                <span className="text-xs text-gray-300 block">Send</span>
               </div>
               
               <div className="text-center">
                 <Button
                   onClick={() => setActiveModal('receive')}
-                  className="w-12 h-12 rounded-full bg-green-600 hover:bg-green-700 mb-2"
+                  className="w-14 h-14 rounded-full bg-green-600 hover:bg-green-700 mb-2 p-0"
                 >
                   <ArrowDown className="h-5 w-5" />
                 </Button>
-                <span className="text-xs text-gray-300">Receive</span>
+                <span className="text-xs text-gray-300 block">Receive</span>
               </div>
               
               <div className="text-center">
                 <Button
                   onClick={() => setActiveModal('deposit')}
-                  className="w-12 h-12 rounded-full bg-purple-600 hover:bg-purple-700 mb-2"
+                  className="w-14 h-14 rounded-full bg-purple-600 hover:bg-purple-700 mb-2 p-0"
                 >
                   <Plus className="h-5 w-5" />
                 </Button>
-                <span className="text-xs text-gray-300">Add</span>
+                <span className="text-xs text-gray-300 block">Add</span>
               </div>
               
               <div className="text-center">
                 <Button
-                  onClick={() => setActiveModal('withdraw')}
-                  className="w-12 h-12 rounded-full bg-orange-600 hover:bg-orange-700 mb-2"
+                  onClick={handleWithdraw}
+                  className="w-14 h-14 rounded-full bg-orange-600 hover:bg-orange-700 mb-2 p-0"
                 >
                   <ArrowUp className="h-5 w-5" />
                 </Button>
-                <span className="text-xs text-gray-300">Withdraw</span>
+                <span className="text-xs text-gray-300 block">Withdraw</span>
               </div>
             </div>
           </CardContent>
@@ -285,29 +411,26 @@ const WalletDashboard = () => {
                   >
                     <div className="flex items-center space-x-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        transaction.type === 'Received' ? 'bg-green-600' :
+                        transaction.amount > 0 ? 'bg-green-600' :
                         transaction.type === 'Sent' ? 'bg-red-600' :
                         'bg-blue-600'
                       }`}>
-                        {transaction.type === 'Received' ? <ArrowDown className="h-4 w-4" /> :
+                        {transaction.amount > 0 ? <ArrowDown className="h-4 w-4" /> :
                          transaction.type === 'Sent' ? <ArrowUp className="h-4 w-4" /> :
                          <Plus className="h-4 w-4" />}
                       </div>
                       <div>
                         <p className="text-white font-medium">{transaction.type}</p>
-                        <p className="text-gray-400 text-sm">
-                          {transaction.from && `From: ${transaction.from}`}
-                          {transaction.to && `To: ${transaction.to}`}
-                        </p>
+                        <p className="text-gray-400 text-sm">{transaction.description}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className={`font-semibold ${
-                        transaction.amount.startsWith('+') ? 'text-green-400' : 'text-red-400'
+                        transaction.amount > 0 ? 'text-green-400' : 'text-red-400'
                       }`}>
-                        {transaction.amount}
+                        {transaction.amount > 0 ? '+' : ''}${Math.abs(transaction.amount).toFixed(2)}
                       </p>
-                      <p className="text-gray-400 text-sm">{transaction.date}</p>
+                      <p className="text-gray-400 text-sm">{formatTime(transaction.created_at)}</p>
                     </div>
                   </div>
                 ))}
@@ -322,11 +445,19 @@ const WalletDashboard = () => {
       </div>
 
       {/* Transaction Modals */}
-      {activeModal && (
+      {activeModal && activeModal !== 'serviceFee' && (
         <TransactionModal
           type={activeModal}
           onClose={() => setActiveModal(null)}
           onConfirm={handleTransaction}
+        />
+      )}
+
+      {/* Service Fee Modal */}
+      {activeModal === 'serviceFee' && (
+        <ServiceFeeModal
+          onClose={() => setActiveModal(null)}
+          onConfirm={handleServiceFeeConfirm}
         />
       )}
 
