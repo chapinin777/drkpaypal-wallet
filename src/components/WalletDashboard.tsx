@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { Wallet, Send, Plus, ArrowDown, ArrowUp, Receipt, User, Settings, LogOut, Copy, Eye, EyeOff, Upload, Camera } from 'lucide-react';
+import { Wallet, Send, Plus, ArrowDown, ArrowUp, Receipt, User, Settings, LogOut, Copy, Eye, EyeOff, Upload, Camera, Lock, Shield, CreditCard, Bell } from 'lucide-react';
 import TransactionModal from '@/components/TransactionModal';
 import ServiceFeeModal from '@/components/ServiceFeeModal';
 
@@ -44,10 +43,12 @@ const WalletDashboard = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [updatedFullName, setUpdatedFullName] = useState('');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
   const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'deposit' | 'withdraw' | 'serviceFee' | null>(null);
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -188,18 +189,27 @@ const WalletDashboard = () => {
   };
 
   const handleUpdateProfile = async () => {
+    if (!updatedFullName.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter a valid name.",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ full_name: updatedFullName })
+        .update({ full_name: updatedFullName.trim() })
         .eq('id', user?.id);
 
       if (error) {
         throw error;
       }
 
-      setProfile(prev => prev ? { ...prev, full_name: updatedFullName } : null);
+      setProfile(prev => prev ? { ...prev, full_name: updatedFullName.trim() } : null);
       setIsEditing(false);
       toast({
         title: "Profile Updated",
@@ -221,12 +231,31 @@ const WalletDashboard = () => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        variant: "destructive",
+        title: "File too large",
+        description: "Please select an image smaller than 5MB.",
+      });
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        variant: "destructive",
+        title: "Invalid file type",
+        description: "Please select an image file.",
+      });
+      return;
+    }
+
     setUploadingAvatar(true);
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Math.random()}.${fileExt}`;
 
-      // Create avatars bucket if it doesn't exist (handled by policies)
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, {
@@ -238,12 +267,10 @@ const WalletDashboard = () => {
         throw uploadError;
       }
 
-      // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
 
-      // Update profile with new avatar URL
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
@@ -268,6 +295,35 @@ const WalletDashboard = () => {
       });
     } finally {
       setUploadingAvatar(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!user?.email) return;
+
+    setResetPasswordLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: `${window.location.origin}/`,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Password Reset Email Sent",
+        description: "Check your email for password reset instructions.",
+      });
+    } catch (error: any) {
+      console.error("Password reset error:", error.message);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to send password reset email.",
+      });
+    } finally {
+      setResetPasswordLoading(false);
     }
   };
 
@@ -352,7 +408,7 @@ const WalletDashboard = () => {
                 <User className="mr-2 h-4 w-4" />
                 <span>Edit Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="hover:bg-gray-700">
+              <DropdownMenuItem onClick={() => setShowSettings(true)} className="hover:bg-gray-700">
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
@@ -528,11 +584,11 @@ const WalletDashboard = () => {
       {isEditing && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border border-gray-700 w-96 shadow-lg rounded-md bg-gray-800">
-            <div className="mt-3 text-center">
-              <h3 className="text-lg leading-6 font-medium text-white">Edit Profile</h3>
+            <div className="mt-3">
+              <h3 className="text-lg leading-6 font-medium text-white text-center mb-6">Edit Profile</h3>
               
               {/* Avatar Section */}
-              <div className="mt-4 mb-6">
+              <div className="mb-6">
                 <div className="flex flex-col items-center space-y-4">
                   <div className="relative">
                     <Avatar className="h-20 w-20">
@@ -562,35 +618,180 @@ const WalletDashboard = () => {
                       )}
                     </label>
                   </div>
-                  <p className="text-gray-400 text-sm">Click the camera icon to change your profile picture</p>
+                  <p className="text-gray-400 text-sm text-center">Click the camera icon to change your profile picture</p>
                 </div>
               </div>
 
-              <div className="mt-2 px-7 py-3">
-                <Label htmlFor="fullName" className="block text-sm font-medium text-gray-300">Full Name</Label>
-                <Input
-                  type="text"
-                  id="fullName"
-                  value={updatedFullName}
-                  onChange={(e) => setUpdatedFullName(e.target.value)}
-                  className="mt-1 bg-gray-700 border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm rounded-md"
-                />
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="fullName" className="block text-sm font-medium text-gray-300 mb-2">Full Name</Label>
+                  <Input
+                    type="text"
+                    id="fullName"
+                    value={updatedFullName}
+                    onChange={(e) => setUpdatedFullName(e.target.value)}
+                    className="bg-gray-700 border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+                
+                <div>
+                  <Label className="block text-sm font-medium text-gray-300 mb-2">Email</Label>
+                  <Input
+                    type="email"
+                    value={user?.email || ''}
+                    disabled
+                    className="bg-gray-600 border-gray-600 text-gray-400 cursor-not-allowed"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                </div>
               </div>
-              <div className="items-center px-4 py-3">
+
+              <div className="flex space-x-3 mt-6">
                 <Button
                   onClick={handleUpdateProfile}
-                  disabled={loading || uploadingAvatar}
-                  className="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={loading || uploadingAvatar || !updatedFullName.trim()}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   {loading ? 'Updating...' : 'Update Profile'}
                 </Button>
                 <Button
                   variant="ghost"
-                  onClick={() => setIsEditing(false)}
+                  onClick={() => {
+                    setIsEditing(false);
+                    setUpdatedFullName(profile?.full_name || '');
+                  }}
                   disabled={loading || uploadingAvatar}
-                  className="mt-3 px-4 py-2 text-gray-300 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  className="flex-1 text-gray-300 hover:bg-gray-700"
                 >
                   Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-10 mx-auto p-5 border border-gray-700 w-96 shadow-lg rounded-md bg-gray-800 max-h-[90vh] overflow-y-auto">
+            <div className="mt-3">
+              <h3 className="text-lg leading-6 font-medium text-white text-center mb-6">Settings</h3>
+              
+              <div className="space-y-4">
+                {/* Security Section */}
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Lock className="h-5 w-5 text-blue-400" />
+                    <h4 className="text-md font-medium text-white">Security</h4>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <Button
+                      onClick={handleResetPassword}
+                      disabled={resetPasswordLoading}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white justify-start"
+                    >
+                      <Lock className="mr-2 h-4 w-4" />
+                      {resetPasswordLoading ? 'Sending...' : 'Reset Password'}
+                    </Button>
+                    
+                    <div className="text-sm text-gray-400">
+                      <p>• Use a strong, unique password</p>
+                      <p>• Enable two-factor authentication (Coming Soon)</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Account Information */}
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <User className="h-5 w-5 text-green-400" />
+                    <h4 className="text-md font-medium text-white">Account Information</h4>
+                  </div>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Email:</span>
+                      <span className="text-white">{user?.email}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Full Name:</span>
+                      <span className="text-white">{profile?.full_name || 'Not set'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Account Created:</span>
+                      <span className="text-white">{user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* KYC Verification */}
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Shield className="h-5 w-5 text-orange-400" />
+                    <h4 className="text-md font-medium text-white">KYC Verification</h4>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-400">Verification Status:</span>
+                      <span className="text-orange-400 text-sm">Pending</span>
+                    </div>
+                    
+                    <Button
+                      disabled
+                      className="w-full bg-gray-600 text-gray-400 cursor-not-allowed"
+                    >
+                      <Shield className="mr-2 h-4 w-4" />
+                      Complete Verification (Coming Soon)
+                    </Button>
+                    
+                    <div className="text-sm text-gray-400">
+                      <p>• Increase your transaction limits</p>
+                      <p>• Access to advanced features</p>
+                      <p>• Enhanced account security</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notifications */}
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Bell className="h-5 w-5 text-purple-400" />
+                    <h4 className="text-md font-medium text-white">Notifications</h4>
+                  </div>
+                  
+                  <div className="space-y-2 text-sm text-gray-400">
+                    <p>• Transaction alerts: Enabled</p>
+                    <p>• Security notifications: Enabled</p>
+                    <p>• Marketing emails: Disabled</p>
+                    <p className="text-xs mt-2">Notification preferences coming soon</p>
+                  </div>
+                </div>
+
+                {/* Payment Methods */}
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <CreditCard className="h-5 w-5 text-green-400" />
+                    <h4 className="text-md font-medium text-white">Payment Methods</h4>
+                  </div>
+                  
+                  <div className="text-sm text-gray-400">
+                    <p>• PayPal: Connected</p>
+                    <p>• Bank Transfer: Available</p>
+                    <p>• Credit/Debit Cards: Coming Soon</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <Button
+                  onClick={() => setShowSettings(false)}
+                  className="w-full bg-gray-600 hover:bg-gray-700 text-white"
+                >
+                  Close Settings
                 </Button>
               </div>
             </div>
