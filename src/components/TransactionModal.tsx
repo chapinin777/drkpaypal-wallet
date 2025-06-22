@@ -1,10 +1,10 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { X } from 'lucide-react';
+import { X, Send, ArrowDown, Plus } from 'lucide-react';
+import PayPalDepositButton from './PayPalDepositButton';
 
 interface TransactionModalProps {
   type: 'send' | 'receive' | 'deposit' | 'withdraw';
@@ -16,126 +16,109 @@ const TransactionModal = ({ type, onClose, onConfirm }: TransactionModalProps) =
   const [amount, setAmount] = useState('');
   const [recipient, setRecipient] = useState('');
 
-  const getTitle = () => {
-    switch (type) {
-      case 'send': return 'Send Money';
-      case 'receive': return 'Receive Money';
-      case 'deposit': return 'Deposit Funds';
-      case 'withdraw': return 'Withdraw Funds';
-    }
-  };
-
-  const getDescription = () => {
-    switch (type) {
-      case 'send': return 'Send money to another wallet';
-      case 'receive': return 'Generate QR code or share details';
-      case 'deposit': return 'Add funds to your wallet';
-      case 'withdraw': return 'Transfer funds to your bank';
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleConfirm = () => {
     const numAmount = parseFloat(amount);
     if (numAmount > 0) {
-      onConfirm(type, numAmount, recipient);
+      onConfirm(type, numAmount, recipient || undefined);
     }
   };
 
-  const generateReceiveCode = () => {
-    return Math.random().toString(36).substring(2, 15).toUpperCase();
+  const getModalTitle = () => {
+    switch (type) {
+      case 'send': return 'Send Money';
+      case 'receive': return 'Request Money';
+      case 'deposit': return 'Add Money';
+      case 'withdraw': return 'Withdraw Money';
+      default: return 'Transaction';
+    }
+  };
+
+  const getIcon = () => {
+    switch (type) {
+      case 'send': return <Send className="h-6 w-6" />;
+      case 'receive': return <ArrowDown className="h-6 w-6" />;
+      case 'deposit': return <Plus className="h-6 w-6" />;
+      case 'withdraw': return <ArrowDown className="h-6 w-6" />;
+      default: return <Send className="h-6 w-6" />;
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-md shadow-2xl border-0 bg-white">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-xl text-gray-800">{getTitle()}</CardTitle>
-            <p className="text-gray-600 text-sm mt-1">{getDescription()}</p>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onClose}
-            className="h-8 w-8 p-0"
-          >
-            <X size={16} />
-          </Button>
-        </CardHeader>
-        
-        <CardContent>
-          {type === 'receive' ? (
-            <div className="text-center space-y-4">
-              <div className="w-32 h-32 mx-auto bg-gray-100 rounded-2xl flex items-center justify-center">
-                <div className="text-4xl">📱</div>
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600">Your receive code:</p>
-                <div className="bg-blue-50 p-3 rounded-xl">
-                  <p className="font-mono text-lg font-semibold text-blue-700">
-                    {generateReceiveCode()}
-                  </p>
-                </div>
-              </div>
-              <Button 
-                onClick={onClose}
-                className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl"
-              >
-                Done
-              </Button>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4 border border-gray-700">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+              {getIcon()}
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="amount">Amount (USD)</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="h-12 border-gray-200 focus:border-blue-500"
-                  placeholder="0.00"
-                  required
-                />
-              </div>
-              
-              {type === 'send' && (
-                <div className="space-y-2">
-                  <Label htmlFor="recipient">Recipient Email or Code</Label>
-                  <Input
-                    id="recipient"
-                    type="text"
-                    value={recipient}
-                    onChange={(e) => setRecipient(e.target.value)}
-                    className="h-12 border-gray-200 focus:border-blue-500"
-                    placeholder="email@example.com or ABC123"
-                    required
-                  />
-                </div>
-              )}
-              
-              <div className="flex space-x-3 pt-4">
+            <h2 className="text-xl font-semibold text-white">{getModalTitle()}</h2>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="text-gray-400 hover:text-white hover:bg-gray-700"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="amount" className="text-gray-300">Amount (USD)</Label>
+            <Input
+              id="amount"
+              type="number"
+              placeholder="0.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="bg-gray-700 border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          {(type === 'send' || type === 'receive') && (
+            <div>
+              <Label htmlFor="recipient" className="text-gray-300">
+                {type === 'send' ? 'Send to' : 'Request from'}
+              </Label>
+              <Input
+                id="recipient"
+                type="email"
+                placeholder="email@example.com"
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+                className="bg-gray-700 border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          )}
+
+          <div className="flex space-x-3 pt-4">
+            {type === 'deposit' ? (
+              <PayPalDepositButton
+                amount={parseFloat(amount) || 0}
+                onSuccess={onClose}
+              />
+            ) : (
+              <>
                 <Button
-                  type="button"
+                  variant="ghost"
                   onClick={onClose}
-                  variant="outline"
-                  className="flex-1 h-12 rounded-xl"
+                  className="flex-1 text-gray-300 hover:bg-gray-700"
                 >
                   Cancel
                 </Button>
                 <Button
-                  type="submit"
-                  className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl"
+                  onClick={handleConfirm}
+                  disabled={!amount || parseFloat(amount) <= 0}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  Confirm
+                  Confirm {getModalTitle()}
                 </Button>
-              </div>
-            </form>
-          )}
-        </CardContent>
-      </Card>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
