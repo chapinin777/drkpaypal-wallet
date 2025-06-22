@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { Wallet, Send, Plus, ArrowDown, ArrowUp, Receipt, User, Settings, LogOut, Copy, Eye, EyeOff } from 'lucide-react';
+import { Wallet, Send, Plus, ArrowDown, ArrowUp, Receipt, User, Settings, LogOut, Copy, Eye, EyeOff, Upload, Camera } from 'lucide-react';
 import TransactionModal from '@/components/TransactionModal';
 import ServiceFeeModal from '@/components/ServiceFeeModal';
 
@@ -44,6 +45,7 @@ const WalletDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [updatedFullName, setUpdatedFullName] = useState('');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
   const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'deposit' | 'withdraw' | 'serviceFee' | null>(null);
 
@@ -215,6 +217,60 @@ const WalletDashboard = () => {
     }
   };
 
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    setUploadingAvatar(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+
+      // Create avatars bucket if it doesn't exist (handled by policies)
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      // Update profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null);
+      toast({
+        title: "Avatar Updated",
+        description: "Your profile picture has been updated successfully.",
+      });
+
+    } catch (error: any) {
+      console.error("Avatar upload error:", error.message);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update profile picture.",
+      });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const copyAddress = () => {
     if (walletData?.wallet_address) {
       navigator.clipboard.writeText(walletData.wallet_address);
@@ -229,7 +285,7 @@ const WalletDashboard = () => {
     console.log(`${type} transaction:`, { amount, recipient });
     toast({
       title: "Transaction initiated",
-      description: `${type} transaction for $${amount} has been initiated.`,
+      description: `${type} transaction for $${amount.toFixed(2)} has been initiated.`,
     });
     setActiveModal(null);
   };
@@ -333,7 +389,7 @@ const WalletDashboard = () => {
             <div className="mb-6">
               <div className="flex items-center justify-center space-x-2">
                 <span className="text-3xl font-bold text-white">
-                  {showBalance ? `$${walletData?.balance?.toLocaleString() || '0.00'}` : '••••••'}
+                  {showBalance ? `$${walletData?.balance?.toFixed(2) || '0.00'}` : '••••••'}
                 </span>
                 <Button 
                   variant="ghost" 
@@ -474,6 +530,42 @@ const WalletDashboard = () => {
           <div className="relative top-20 mx-auto p-5 border border-gray-700 w-96 shadow-lg rounded-md bg-gray-800">
             <div className="mt-3 text-center">
               <h3 className="text-lg leading-6 font-medium text-white">Edit Profile</h3>
+              
+              {/* Avatar Section */}
+              <div className="mt-4 mb-6">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="relative">
+                    <Avatar className="h-20 w-20">
+                      <AvatarImage 
+                        src={profile?.avatar_url || `https://avatar.vercel.sh/${user?.email}.png`} 
+                        alt={profile?.full_name || user?.email || "Avatar"} 
+                      />
+                      <AvatarFallback className="bg-gray-700 text-white text-xl">
+                        {profile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <input
+                      type="file"
+                      id="avatar-upload"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="avatar-upload"
+                      className="absolute -bottom-2 -right-2 bg-blue-600 hover:bg-blue-700 rounded-full p-2 cursor-pointer transition-colors"
+                    >
+                      {uploadingAvatar ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      ) : (
+                        <Camera className="h-4 w-4 text-white" />
+                      )}
+                    </label>
+                  </div>
+                  <p className="text-gray-400 text-sm">Click the camera icon to change your profile picture</p>
+                </div>
+              </div>
+
               <div className="mt-2 px-7 py-3">
                 <Label htmlFor="fullName" className="block text-sm font-medium text-gray-300">Full Name</Label>
                 <Input
@@ -487,7 +579,7 @@ const WalletDashboard = () => {
               <div className="items-center px-4 py-3">
                 <Button
                   onClick={handleUpdateProfile}
-                  disabled={loading}
+                  disabled={loading || uploadingAvatar}
                   className="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {loading ? 'Updating...' : 'Update Profile'}
@@ -495,7 +587,7 @@ const WalletDashboard = () => {
                 <Button
                   variant="ghost"
                   onClick={() => setIsEditing(false)}
-                  disabled={loading}
+                  disabled={loading || uploadingAvatar}
                   className="mt-3 px-4 py-2 text-gray-300 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
                 >
                   Cancel
