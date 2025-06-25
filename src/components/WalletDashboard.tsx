@@ -15,10 +15,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Wallet, Send, Plus, ArrowDown, ArrowUp, Receipt, User, Settings, LogOut, Copy, Eye, EyeOff, Upload, Camera, Lock, Shield, CreditCard, Bell } from 'lucide-react';
-import TransactionModal from '@/components/TransactionModal';
+import { Wallet, Send, Plus, ArrowDown, ArrowUp, Receipt, User, Settings, LogOut, Copy, Eye, EyeOff, Upload, Camera, Lock, Shield, CreditCard, Bell, Smartphone, Monitor, Globe, HelpCircle, FileText, Zap } from 'lucide-react';
+import EnhancedTransactionModal from '@/components/EnhancedTransactionModal';
 import ServiceFeeModal from '@/components/ServiceFeeModal';
+import AssetsSection from '@/components/AssetsSection';
 
 interface WalletData {
   balance: number;
@@ -89,11 +91,10 @@ const WalletDashboard = () => {
 
         if (walletError) {
           console.error("Wallet fetch error:", walletError);
-          // Set default wallet data if no wallet exists yet
           setWalletData({
             balance: 1250.00,
             wallet_address: '0x742d35A8f',
-            pending_balance: 50.00
+            pending_balance: 0.00
           });
         } else {
           setWalletData(walletResponse);
@@ -116,7 +117,6 @@ const WalletDashboard = () => {
 
         if (transactionsError) {
           console.error("Transactions fetch error:", transactionsError);
-          // Set default transactions for demo
           setTransactions([
             {
               id: '1',
@@ -231,7 +231,6 @@ const WalletDashboard = () => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
-    // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       toast({
         variant: "destructive",
@@ -241,7 +240,6 @@ const WalletDashboard = () => {
       return;
     }
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast({
         variant: "destructive",
@@ -347,7 +345,6 @@ const WalletDashboard = () => {
   };
 
   const handleWithdraw = () => {
-    // Show service fee modal for withdrawals with user balance
     setActiveModal('serviceFee');
   };
 
@@ -370,6 +367,25 @@ const WalletDashboard = () => {
     if (hours < 1) return 'Just now';
     if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
     return `${days} day${days > 1 ? 's' : ''} ago`;
+  };
+
+  const getTransactionIcon = (type: string, amount: number) => {
+    if (amount > 0) return <ArrowDown className="h-4 w-4" />;
+    if (type === 'Sent') return <ArrowUp className="h-4 w-4" />;
+    return <Plus className="h-4 w-4" />;
+  };
+
+  const getTransactionBadge = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-xs">Completed</Badge>;
+      case 'pending':
+        return <Badge variant="secondary" className="bg-orange-600 hover:bg-orange-700 text-xs">Pending</Badge>;
+      case 'failed':
+        return <Badge variant="destructive" className="text-xs">Failed</Badge>;
+      default:
+        return <Badge variant="outline" className="text-xs">{status}</Badge>;
+    }
   };
 
   if (loading) {
@@ -423,9 +439,9 @@ const WalletDashboard = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-md mx-auto py-6 px-4">
-        {/* Balance Card - Metamask Style */}
-        <Card className="bg-gray-800 border-gray-700 shadow-lg mb-6">
+      <div className="max-w-md mx-auto py-6 px-4 space-y-6">
+        {/* Balance Card */}
+        <Card className="bg-gray-800 border-gray-700 shadow-lg">
           <CardContent className="p-6 text-center">
             <div className="flex items-center justify-center mb-4">
               <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
@@ -464,7 +480,6 @@ const WalletDashboard = () => {
               )}
             </div>
 
-            {/* Action Buttons - Metamask Style */}
             <div className="grid grid-cols-4 gap-3">
               <div className="text-center">
                 <Button
@@ -509,6 +524,9 @@ const WalletDashboard = () => {
           </CardContent>
         </Card>
 
+        {/* Assets Section */}
+        <AssetsSection />
+
         {/* Recent Transactions */}
         <Card className="bg-gray-800 border-gray-700 shadow-lg">
           <CardHeader className="pb-3">
@@ -523,9 +541,15 @@ const WalletDashboard = () => {
                 {transactions.map((transaction, index) => (
                   <div 
                     key={transaction.id} 
-                    className={`flex items-center justify-between p-4 hover:bg-gray-700/50 transition-colors ${
+                    className={`flex items-center justify-between p-4 hover:bg-gray-700/50 transition-colors cursor-pointer ${
                       index !== transactions.length - 1 ? 'border-b border-gray-700' : ''
                     }`}
+                    onClick={() => {
+                      toast({
+                        title: "Transaction Details",
+                        description: `Transaction ID: ${transaction.id}`,
+                      });
+                    }}
                   >
                     <div className="flex items-center space-x-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
@@ -533,12 +557,13 @@ const WalletDashboard = () => {
                         transaction.type === 'Sent' ? 'bg-red-600' :
                         'bg-blue-600'
                       }`}>
-                        {transaction.amount > 0 ? <ArrowDown className="h-4 w-4" /> :
-                         transaction.type === 'Sent' ? <ArrowUp className="h-4 w-4" /> :
-                         <Plus className="h-4 w-4" />}
+                        {getTransactionIcon(transaction.type, transaction.amount)}
                       </div>
                       <div>
-                        <p className="text-white font-medium">{transaction.type}</p>
+                        <div className="flex items-center space-x-2">
+                          <p className="text-white font-medium">{transaction.type}</p>
+                          {getTransactionBadge(transaction.status)}
+                        </div>
                         <p className="text-gray-400 text-sm">{transaction.description}</p>
                       </div>
                     </div>
@@ -562,9 +587,9 @@ const WalletDashboard = () => {
         </Card>
       </div>
 
-      {/* Transaction Modals */}
+      {/* Enhanced Transaction Modal */}
       {activeModal && activeModal !== 'serviceFee' && (
-        <TransactionModal
+        <EnhancedTransactionModal
           type={activeModal}
           onClose={() => setActiveModal(null)}
           onConfirm={handleTransaction}
@@ -587,7 +612,6 @@ const WalletDashboard = () => {
             <div className="mt-3">
               <h3 className="text-lg leading-6 font-medium text-white text-center mb-6">Edit Profile</h3>
               
-              {/* Avatar Section */}
               <div className="mb-6">
                 <div className="flex flex-col items-center space-y-4">
                   <div className="relative">
@@ -672,7 +696,7 @@ const WalletDashboard = () => {
         </div>
       )}
 
-      {/* Settings Modal */}
+      {/* Enhanced Settings Modal */}
       {showSettings && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full z-50">
           <div className="relative top-10 mx-auto p-5 border border-gray-700 w-96 shadow-lg rounded-md bg-gray-800 max-h-[90vh] overflow-y-auto">
@@ -697,9 +721,15 @@ const WalletDashboard = () => {
                       {resetPasswordLoading ? 'Sending...' : 'Reset Password'}
                     </Button>
                     
-                    <div className="text-sm text-gray-400">
-                      <p>• Use a strong, unique password</p>
-                      <p>• Enable two-factor authentication (Coming Soon)</p>
+                    <div className="text-sm text-gray-400 space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <Shield className="h-3 w-3" />
+                        <span>Use a strong, unique password</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Zap className="h-3 w-3" />
+                        <span>Two-factor authentication (Coming Soon)</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -724,6 +754,52 @@ const WalletDashboard = () => {
                       <span className="text-gray-400">Account Created:</span>
                       <span className="text-white">{user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Wallet ID:</span>
+                      <span className="text-white font-mono text-xs">{walletData?.wallet_address}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Preferences */}
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Settings className="h-5 w-5 text-purple-400" />
+                    <h4 className="text-md font-medium text-white">Preferences</h4>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-400 text-sm">Dark Mode</span>
+                      <Badge variant="default" className="bg-green-600">Enabled</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-400 text-sm">Currency</span>
+                      <Badge variant="outline" className="text-gray-300 border-gray-600">USD</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-400 text-sm">Language</span>
+                      <Badge variant="outline" className="text-gray-300 border-gray-600">English</Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Device & Platform */}
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Monitor className="h-5 w-5 text-orange-400" />
+                    <h4 className="text-md font-medium text-white">Device & Platform</h4>
+                  </div>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <Globe className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-400">Web Application</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Smartphone className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-400">Mobile Responsive</span>
+                    </div>
                   </div>
                 </div>
 
@@ -737,7 +813,7 @@ const WalletDashboard = () => {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-400">Verification Status:</span>
-                      <span className="text-orange-400 text-sm">Pending</span>
+                      <Badge variant="secondary" className="bg-orange-600 hover:bg-orange-700">Pending</Badge>
                     </div>
                     
                     <Button
@@ -748,10 +824,19 @@ const WalletDashboard = () => {
                       Complete Verification (Coming Soon)
                     </Button>
                     
-                    <div className="text-sm text-gray-400">
-                      <p>• Increase your transaction limits</p>
-                      <p>• Access to advanced features</p>
-                      <p>• Enhanced account security</p>
+                    <div className="text-sm text-gray-400 space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <ArrowUp className="h-3 w-3" />
+                        <span>Increase transaction limits</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Zap className="h-3 w-3" />
+                        <span>Access to advanced features</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Shield className="h-3 w-3" />
+                        <span>Enhanced account security</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -764,9 +849,18 @@ const WalletDashboard = () => {
                   </div>
                   
                   <div className="space-y-2 text-sm text-gray-400">
-                    <p>• Transaction alerts: Enabled</p>
-                    <p>• Security notifications: Enabled</p>
-                    <p>• Marketing emails: Disabled</p>
+                    <div className="flex items-center justify-between">
+                      <span>Transaction Alerts</span>
+                      <Badge variant="default" className="bg-green-600">Enabled</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Security Notifications</span>
+                      <Badge variant="default" className="bg-green-600">Enabled</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Marketing Emails</span>
+                      <Badge variant="destructive">Disabled</Badge>
+                    </div>
                     <p className="text-xs mt-2">Notification preferences coming soon</p>
                   </div>
                 </div>
@@ -778,10 +872,46 @@ const WalletDashboard = () => {
                     <h4 className="text-md font-medium text-white">Payment Methods</h4>
                   </div>
                   
-                  <div className="text-sm text-gray-400">
-                    <p>• PayPal: Connected</p>
-                    <p>• Bank Transfer: Available</p>
-                    <p>• Credit/Debit Cards: Coming Soon</p>
+                  <div className="text-sm text-gray-400 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span>PayPal</span>
+                      <Badge variant="default" className="bg-blue-600">Connected</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Bank Transfer</span>
+                      <Badge variant="outline" className="text-gray-300 border-gray-600">Available</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Credit/Debit Cards</span>
+                      <Badge variant="secondary" className="bg-gray-600">Coming Soon</Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Support */}
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <HelpCircle className="h-5 w-5 text-blue-400" />
+                    <h4 className="text-md font-medium text-white">Support</h4>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start bg-transparent border-gray-600 text-gray-300 hover:bg-gray-600"
+                      disabled
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      Documentation (Coming Soon)
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start bg-transparent border-gray-600 text-gray-300 hover:bg-gray-600"
+                      disabled
+                    >
+                      <HelpCircle className="mr-2 h-4 w-4" />
+                      Contact Support (Coming Soon)
+                    </Button>
                   </div>
                 </div>
               </div>
