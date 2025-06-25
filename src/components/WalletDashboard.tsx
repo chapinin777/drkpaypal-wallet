@@ -378,58 +378,64 @@ const WalletDashboard = () => {
   const getTransactionBadge = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed':
-        return <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-xs">Completed</Badge>;
+        return <Badge variant="default" className="bg-green-500/20 text-green-300 border-green-500/30 text-xs">Completed</Badge>;
       case 'pending':
-        return <Badge variant="secondary" className="bg-orange-600 hover:bg-orange-700 text-xs">Pending</Badge>;
+        return <Badge variant="secondary" className="bg-orange-500/20 text-orange-300 border-orange-500/30 text-xs">Pending</Badge>;
       case 'failed':
-        return <Badge variant="destructive" className="text-xs">Failed</Badge>;
+        return <Badge variant="destructive" className="bg-red-500/20 text-red-300 border-red-500/30 text-xs">Failed</Badge>;
       default:
-        return <Badge variant="outline" className="text-xs">{status}</Badge>;
+        return <Badge variant="outline" className="text-xs border-white/20">{status}</Badge>;
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading wallet...</p>
+      <div className="min-h-screen mesh-bg flex items-center justify-center">
+        <div className="text-center fade-in-up">
+          <div className="w-16 h-16 glass-card rounded-full flex items-center justify-center mb-4 mx-auto float-animation">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-400 border-t-transparent" />
+          </div>
+          <p className="text-gray-300">Loading your wallet...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      {/* Header */}
-      <div className="bg-gray-800 border-b border-gray-700 px-4 py-4">
+    <div className="min-h-screen mesh-bg text-white">
+      {/* Enhanced Header with glassmorphism */}
+      <div className="glass-strong border-b border-white/10 px-4 py-4 sticky top-0 z-40">
         <div className="max-w-md mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Wallet className="h-6 w-6 text-blue-400" />
-            <span className="text-lg font-bold text-white">PayPal Wallet</span>
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 stripe-gradient rounded-lg flex items-center justify-center glow-purple">
+              <Wallet className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+              PayPal Wallet
+            </span>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 rounded-full hover:bg-gray-700">
-                <Avatar className="h-8 w-8">
+              <Button variant="ghost" className="h-10 w-10 rounded-full hover:bg-white/10 glass-light">
+                <Avatar className="h-10 w-10 ring-2 ring-purple-500/30">
                   <AvatarImage src={profile?.avatar_url || `https://avatar.vercel.sh/${user?.email}.png`} alt={profile?.full_name || user?.email || "Avatar"} />
-                  <AvatarFallback className="bg-gray-700 text-white">{profile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback className="glass text-white">{profile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700 text-white">
+            <DropdownMenuContent align="end" className="glass-strong border-white/10 text-white w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-gray-700" />
-              <DropdownMenuItem onClick={() => setIsEditing(true)} className="hover:bg-gray-700">
+              <DropdownMenuSeparator className="bg-white/10" />
+              <DropdownMenuItem onClick={() => setIsEditing(true)} className="hover:bg-white/10">
                 <User className="mr-2 h-4 w-4" />
                 <span>Edit Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShowSettings(true)} className="hover:bg-gray-700">
+              <DropdownMenuItem onClick={() => setShowSettings(true)} className="hover:bg-white/10">
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-gray-700" />
-              <DropdownMenuItem onClick={handleSignOut} className="hover:bg-gray-700">
+              <DropdownMenuSeparator className="bg-white/10" />
+              <DropdownMenuItem onClick={handleSignOut} className="hover:bg-white/10">
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
@@ -440,53 +446,55 @@ const WalletDashboard = () => {
 
       {/* Main Content */}
       <div className="max-w-md mx-auto py-6 px-4 space-y-6">
-        {/* Balance Card */}
-        <Card className="bg-gray-800 border-gray-700 shadow-lg">
+        {/* Enhanced Balance Card */}
+        <Card className="glass-card border-white/10 shadow-2xl hover-glow fade-in-up">
           <CardContent className="p-6 text-center">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <Wallet className="h-6 w-6 text-white" />
+            <div className="flex items-center justify-center mb-6">
+              <div className="w-16 h-16 luma-gradient rounded-2xl flex items-center justify-center shadow-lg float-animation">
+                <Wallet className="h-8 w-8 text-white" />
               </div>
             </div>
             
-            <div className="mb-2">
-              <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm mb-1">
-                <span>{walletData?.wallet_address || 'Loading...'}</span>
-                <Button variant="ghost" size="sm" onClick={copyAddress} className="h-6 w-6 p-0">
+            <div className="mb-4">
+              <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm mb-2">
+                <span className="font-mono">{walletData?.wallet_address || 'Loading...'}</span>
+                <Button variant="ghost" size="sm" onClick={copyAddress} className="h-6 w-6 p-0 hover:bg-white/10">
                   <Copy className="h-3 w-3" />
                 </Button>
               </div>
             </div>
 
-            <div className="mb-6">
-              <div className="flex items-center justify-center space-x-2">
-                <span className="text-3xl font-bold text-white">
+            <div className="mb-8">
+              <div className="flex items-center justify-center space-x-3 mb-2">
+                <span className="text-4xl font-bold text-white">
                   {showBalance ? `$${walletData?.balance?.toFixed(2) || '0.00'}` : '••••••'}
                 </span>
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   onClick={() => setShowBalance(!showBalance)}
-                  className="h-6 w-6 p-0"
+                  className="h-8 w-8 p-0 hover:bg-white/10 glass-light"
                 >
                   {showBalance ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
-              <p className="text-gray-400 text-sm">Available Balance</p>
+              <p className="text-gray-400 text-sm mb-2">Available Balance</p>
               {walletData?.pending_balance && walletData.pending_balance > 0 && (
-                <p className="text-orange-400 text-xs mt-1">
-                  Pending: ${walletData.pending_balance.toFixed(2)}
-                </p>
+                <div className="inline-flex items-center px-3 py-1 rounded-full bg-orange-500/20 border border-orange-500/30">
+                  <span className="text-orange-300 text-xs">
+                    Pending: ${walletData.pending_balance.toFixed(2)}
+                  </span>
+                </div>
               )}
             </div>
 
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-4 gap-4">
               <div className="text-center">
                 <Button
                   onClick={() => setActiveModal('send')}
-                  className="w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 mb-2 p-0"
+                  className="w-16 h-16 rounded-2xl btn-glass stripe-gradient mb-3 p-0 hover-glow"
                 >
-                  <Send className="h-5 w-5" />
+                  <Send className="h-6 w-6" />
                 </Button>
                 <span className="text-xs text-gray-300 block">Send</span>
               </div>
@@ -494,9 +502,9 @@ const WalletDashboard = () => {
               <div className="text-center">
                 <Button
                   onClick={() => setActiveModal('receive')}
-                  className="w-14 h-14 rounded-full bg-green-600 hover:bg-green-700 mb-2 p-0"
+                  className="w-16 h-16 rounded-2xl btn-glass bg-gradient-to-br from-green-500 to-emerald-600 mb-3 p-0 hover-glow"
                 >
-                  <ArrowDown className="h-5 w-5" />
+                  <ArrowDown className="h-6 w-6" />
                 </Button>
                 <span className="text-xs text-gray-300 block">Receive</span>
               </div>
@@ -504,9 +512,9 @@ const WalletDashboard = () => {
               <div className="text-center">
                 <Button
                   onClick={() => setActiveModal('deposit')}
-                  className="w-14 h-14 rounded-full bg-purple-600 hover:bg-purple-700 mb-2 p-0"
+                  className="w-16 h-16 rounded-2xl btn-glass bg-gradient-to-br from-purple-500 to-violet-600 mb-3 p-0 hover-glow"
                 >
-                  <Plus className="h-5 w-5" />
+                  <Plus className="h-6 w-6" />
                 </Button>
                 <span className="text-xs text-gray-300 block">Add</span>
               </div>
@@ -514,9 +522,9 @@ const WalletDashboard = () => {
               <div className="text-center">
                 <Button
                   onClick={handleWithdraw}
-                  className="w-14 h-14 rounded-full bg-orange-600 hover:bg-orange-700 mb-2 p-0"
+                  className="w-16 h-16 rounded-2xl btn-glass bg-gradient-to-br from-orange-500 to-red-600 mb-3 p-0 hover-glow"
                 >
-                  <ArrowUp className="h-5 w-5" />
+                  <ArrowUp className="h-6 w-6" />
                 </Button>
                 <span className="text-xs text-gray-300 block">Withdraw</span>
               </div>
@@ -524,14 +532,16 @@ const WalletDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Assets Section */}
-        <AssetsSection />
+        {/* Enhanced Assets Section */}
+        <div className="fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <AssetsSection />
+        </div>
 
-        {/* Recent Transactions */}
-        <Card className="bg-gray-800 border-gray-700 shadow-lg">
+        {/* Enhanced Recent Transactions */}
+        <Card className="glass-card border-white/10 shadow-2xl fade-in-up" style={{ animationDelay: '0.2s' }}>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-semibold text-white flex items-center">
-              <Receipt className="mr-2 h-5 w-5" />
+              <Receipt className="mr-2 h-5 w-5 text-purple-400" />
               Recent Transactions
             </CardTitle>
           </CardHeader>
@@ -541,8 +551,8 @@ const WalletDashboard = () => {
                 {transactions.map((transaction, index) => (
                   <div 
                     key={transaction.id} 
-                    className={`flex items-center justify-between p-4 hover:bg-gray-700/50 transition-colors cursor-pointer ${
-                      index !== transactions.length - 1 ? 'border-b border-gray-700' : ''
+                    className={`flex items-center justify-between p-4 hover:bg-white/5 transition-all duration-300 cursor-pointer border-white/5 ${
+                      index !== transactions.length - 1 ? 'border-b' : ''
                     }`}
                     onClick={() => {
                       toast({
@@ -552,15 +562,15 @@ const WalletDashboard = () => {
                     }}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        transaction.amount > 0 ? 'bg-green-600' :
-                        transaction.type === 'Sent' ? 'bg-red-600' :
-                        'bg-blue-600'
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${
+                        transaction.amount > 0 ? 'bg-gradient-to-br from-green-500 to-emerald-600' :
+                        transaction.type === 'Sent' ? 'bg-gradient-to-br from-red-500 to-pink-600' :
+                        'bg-gradient-to-br from-blue-500 to-indigo-600'
                       }`}>
                         {getTransactionIcon(transaction.type, transaction.amount)}
                       </div>
                       <div>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 mb-1">
                           <p className="text-white font-medium">{transaction.type}</p>
                           {getTransactionBadge(transaction.status)}
                         </div>
@@ -579,8 +589,12 @@ const WalletDashboard = () => {
                 ))}
               </div>
             ) : (
-              <div className="p-6 text-center">
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 glass-light rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Receipt className="h-8 w-8 text-gray-400" />
+                </div>
                 <p className="text-gray-400">No transactions yet.</p>
+                <p className="text-gray-500 text-sm mt-1">Your transaction history will appear here</p>
               </div>
             )}
           </CardContent>
@@ -605,22 +619,22 @@ const WalletDashboard = () => {
         />
       )}
 
-      {/* Edit Profile Modal */}
+      {/* Enhanced Edit Profile Modal */}
       {isEditing && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border border-gray-700 w-96 shadow-lg rounded-md bg-gray-800">
-            <div className="mt-3">
-              <h3 className="text-lg leading-6 font-medium text-white text-center mb-6">Edit Profile</h3>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+          <div className="glass-strong border-white/20 w-full max-w-md shadow-2xl rounded-2xl scale-in">
+            <div className="p-6">
+              <h3 className="text-xl leading-6 font-semibold text-white text-center mb-8">Edit Profile</h3>
               
-              <div className="mb-6">
+              <div className="mb-8">
                 <div className="flex flex-col items-center space-y-4">
                   <div className="relative">
-                    <Avatar className="h-20 w-20">
+                    <Avatar className="h-24 w-24 ring-4 ring-purple-500/30">
                       <AvatarImage 
                         src={profile?.avatar_url || `https://avatar.vercel.sh/${user?.email}.png`} 
                         alt={profile?.full_name || user?.email || "Avatar"} 
                       />
-                      <AvatarFallback className="bg-gray-700 text-white text-xl">
+                      <AvatarFallback className="glass text-white text-2xl">
                         {profile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -633,7 +647,7 @@ const WalletDashboard = () => {
                     />
                     <label
                       htmlFor="avatar-upload"
-                      className="absolute -bottom-2 -right-2 bg-blue-600 hover:bg-blue-700 rounded-full p-2 cursor-pointer transition-colors"
+                      className="absolute -bottom-2 -right-2 stripe-gradient hover:opacity-80 rounded-xl p-3 cursor-pointer transition-all hover:scale-105 shadow-lg"
                     >
                       {uploadingAvatar ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
@@ -646,36 +660,36 @@ const WalletDashboard = () => {
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <Label htmlFor="fullName" className="block text-sm font-medium text-gray-300 mb-2">Full Name</Label>
+                  <Label htmlFor="fullName" className="block text-sm font-medium text-gray-300 mb-3">Full Name</Label>
                   <Input
                     type="text"
                     id="fullName"
                     value={updatedFullName}
                     onChange={(e) => setUpdatedFullName(e.target.value)}
-                    className="bg-gray-700 border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500"
+                    className="glass border-white/20 text-white focus:ring-purple-500 focus:border-purple-500 rounded-xl"
                     placeholder="Enter your full name"
                   />
                 </div>
                 
                 <div>
-                  <Label className="block text-sm font-medium text-gray-300 mb-2">Email</Label>
+                  <Label className="block text-sm font-medium text-gray-300 mb-3">Email</Label>
                   <Input
                     type="email"
                     value={user?.email || ''}
                     disabled
-                    className="bg-gray-600 border-gray-600 text-gray-400 cursor-not-allowed"
+                    className="glass border-white/10 text-gray-400 cursor-not-allowed rounded-xl"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                  <p className="text-xs text-gray-500 mt-2">Email cannot be changed</p>
                 </div>
               </div>
 
-              <div className="flex space-x-3 mt-6">
+              <div className="flex space-x-3 mt-8">
                 <Button
                   onClick={handleUpdateProfile}
                   disabled={loading || uploadingAvatar || !updatedFullName.trim()}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  className="flex-1 stripe-gradient hover:opacity-90 text-white rounded-xl py-3 font-medium"
                 >
                   {loading ? 'Updating...' : 'Update Profile'}
                 </Button>
@@ -686,7 +700,7 @@ const WalletDashboard = () => {
                     setUpdatedFullName(profile?.full_name || '');
                   }}
                   disabled={loading || uploadingAvatar}
-                  className="flex-1 text-gray-300 hover:bg-gray-700"
+                  className="flex-1 text-gray-300 hover:bg-white/10 rounded-xl py-3"
                 >
                   Cancel
                 </Button>
@@ -698,30 +712,30 @@ const WalletDashboard = () => {
 
       {/* Enhanced Settings Modal */}
       {showSettings && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-5 border border-gray-700 w-96 shadow-lg rounded-md bg-gray-800 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+          <div className="relative top-10 mx-auto p-6 border border-white/20 w-full max-w-md shadow-2xl rounded-2xl glass-strong max-h-[90vh] overflow-y-auto">
             <div className="mt-3">
-              <h3 className="text-lg leading-6 font-medium text-white text-center mb-6">Settings</h3>
+              <h3 className="text-xl leading-6 font-semibold text-white text-center mb-8">Settings</h3>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {/* Security Section */}
-                <div className="bg-gray-700 rounded-lg p-4">
-                  <div className="flex items-center space-x-2 mb-3">
+                <div className="glass-light rounded-xl p-5">
+                  <div className="flex items-center space-x-2 mb-4">
                     <Lock className="h-5 w-5 text-blue-400" />
                     <h4 className="text-md font-medium text-white">Security</h4>
                   </div>
                   
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <Button
                       onClick={handleResetPassword}
                       disabled={resetPasswordLoading}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white justify-start"
+                      className="w-full stripe-gradient hover:opacity-90 text-white justify-start rounded-xl py-3"
                     >
                       <Lock className="mr-2 h-4 w-4" />
                       {resetPasswordLoading ? 'Sending...' : 'Reset Password'}
                     </Button>
                     
-                    <div className="text-sm text-gray-400 space-y-1">
+                    <div className="text-sm text-gray-400 space-y-2">
                       <div className="flex items-center space-x-2">
                         <Shield className="h-3 w-3" />
                         <span>Use a strong, unique password</span>
@@ -735,26 +749,26 @@ const WalletDashboard = () => {
                 </div>
 
                 {/* Account Information */}
-                <div className="bg-gray-700 rounded-lg p-4">
-                  <div className="flex items-center space-x-2 mb-3">
+                <div className="glass-light rounded-xl p-5">
+                  <div className="flex items-center space-x-2 mb-4">
                     <User className="h-5 w-5 text-green-400" />
                     <h4 className="text-md font-medium text-white">Account Information</h4>
                   </div>
                   
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between items-center">
                       <span className="text-gray-400">Email:</span>
                       <span className="text-white">{user?.email}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="text-gray-400">Full Name:</span>
                       <span className="text-white">{profile?.full_name || 'Not set'}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="text-gray-400">Account Created:</span>
                       <span className="text-white">{user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="text-gray-400">Wallet ID:</span>
                       <span className="text-white font-mono text-xs">{walletData?.wallet_address}</span>
                     </div>
@@ -762,69 +776,50 @@ const WalletDashboard = () => {
                 </div>
 
                 {/* Preferences */}
-                <div className="bg-gray-700 rounded-lg p-4">
-                  <div className="flex items-center space-x-2 mb-3">
+                <div className="glass-light rounded-xl p-5">
+                  <div className="flex items-center space-x-2 mb-4">
                     <Settings className="h-5 w-5 text-purple-400" />
                     <h4 className="text-md font-medium text-white">Preferences</h4>
                   </div>
                   
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-400 text-sm">Dark Mode</span>
-                      <Badge variant="default" className="bg-green-600">Enabled</Badge>
+                      <Badge variant="default" className="bg-green-500/20 text-green-300 border-green-500/30">Enabled</Badge>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-400 text-sm">Currency</span>
-                      <Badge variant="outline" className="text-gray-300 border-gray-600">USD</Badge>
+                      <Badge variant="outline" className="text-gray-300 border-white/20">USD</Badge>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-400 text-sm">Language</span>
-                      <Badge variant="outline" className="text-gray-300 border-gray-600">English</Badge>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Device & Platform */}
-                <div className="bg-gray-700 rounded-lg p-4">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <Monitor className="h-5 w-5 text-orange-400" />
-                    <h4 className="text-md font-medium text-white">Device & Platform</h4>
-                  </div>
-                  
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center space-x-2">
-                      <Globe className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-400">Web Application</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Smartphone className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-400">Mobile Responsive</span>
+                      <Badge variant="outline" className="text-gray-300 border-white/20">English</Badge>
                     </div>
                   </div>
                 </div>
 
                 {/* KYC Verification */}
-                <div className="bg-gray-700 rounded-lg p-4">
-                  <div className="flex items-center space-x-2 mb-3">
+                <div className="glass-light rounded-xl p-5">
+                  <div className="flex items-center space-x-2 mb-4">
                     <Shield className="h-5 w-5 text-orange-400" />
                     <h4 className="text-md font-medium text-white">KYC Verification</h4>
                   </div>
                   
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-400">Verification Status:</span>
-                      <Badge variant="secondary" className="bg-orange-600 hover:bg-orange-700">Pending</Badge>
+                      <Badge variant="secondary" className="bg-orange-500/20 text-orange-300 border-orange-500/30">Pending</Badge>
                     </div>
                     
                     <Button
                       disabled
-                      className="w-full bg-gray-600 text-gray-400 cursor-not-allowed"
+                      className="w-full glass border-white/20 text-gray-400 cursor-not-allowed rounded-xl py-3"
                     >
                       <Shield className="mr-2 h-4 w-4" />
                       Complete Verification (Coming Soon)
                     </Button>
                     
-                    <div className="text-sm text-gray-400 space-y-1">
+                    <div className="text-sm text-gray-400 space-y-2">
                       <div className="flex items-center space-x-2">
                         <ArrowUp className="h-3 w-3" />
                         <span>Increase transaction limits</span>
@@ -842,63 +837,62 @@ const WalletDashboard = () => {
                 </div>
 
                 {/* Notifications */}
-                <div className="bg-gray-700 rounded-lg p-4">
-                  <div className="flex items-center space-x-2 mb-3">
+                <div className="glass-light rounded-xl p-5">
+                  <div className="flex items-center space-x-2 mb-4">
                     <Bell className="h-5 w-5 text-purple-400" />
                     <h4 className="text-md font-medium text-white">Notifications</h4>
                   </div>
                   
-                  <div className="space-y-2 text-sm text-gray-400">
+                  <div className="space-y-3 text-sm text-gray-400">
                     <div className="flex items-center justify-between">
                       <span>Transaction Alerts</span>
-                      <Badge variant="default" className="bg-green-600">Enabled</Badge>
+                      <Badge variant="default" className="bg-green-500/20 text-green-300 border-green-500/30">Enabled</Badge>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Security Notifications</span>
-                      <Badge variant="default" className="bg-green-600">Enabled</Badge>
+                      <Badge variant="default" className="bg-green-500/20 text-green-300 border-green-500/30">Enabled</Badge>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Marketing Emails</span>
-                      <Badge variant="destructive">Disabled</Badge>
+                      <Badge variant="destructive" className="bg-red-500/20 text-red-300 border-red-500/30">Disabled</Badge>
                     </div>
-                    <p className="text-xs mt-2">Notification preferences coming soon</p>
                   </div>
                 </div>
 
                 {/* Payment Methods */}
-                <div className="bg-gray-700 rounded-lg p-4">
-                  <div className="flex items-center space-x-2 mb-3">
+                <div className="glass-light rounded-xl p-5">
+                  <div className="flex items-center space-x-2 mb-4">
                     <CreditCard className="h-5 w-5 text-green-400" />
                     <h4 className="text-md font-medium text-white">Payment Methods</h4>
                   </div>
                   
-                  <div className="text-sm text-gray-400 space-y-2">
+                  <div className="text-sm text-gray-400 space-y-3">
                     <div className="flex items-center justify-between">
                       <span>PayPal</span>
-                      <Badge variant="default" className="bg-blue-600">Connected</Badge>
+                      <Badge variant="default" className="bg-blue-500/20 text-blue-300 border-blue-500/30">Connected</Badge>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Bank Transfer</span>
-                      <Badge variant="outline" className="text-gray-300 border-gray-600">Available</Badge>
+                      <Badge variant="outline" className="text-gray-300 border-white/20">Available</Badge>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Credit/Debit Cards</span>
-                      <Badge variant="secondary" className="bg-gray-600">Coming Soon</Badge>
+                      <Badge variant="secondary" className="bg-gray-500/20 text-gray-300 border-gray-500/30">Coming Soon</Badge>
                     </div>
                   </div>
                 </div>
 
                 {/* Support */}
-                <div className="bg-gray-700 rounded-lg p-4">
-                  <div className="flex items-center space-x-2 mb-3">
+                <div className="glass-light rounded-xl p-5">
+                  <div className="flex items-center space-x-2 mb-4">
                     <HelpCircle className="h-5 w-5 text-blue-400" />
                     <h4 className="text-md font-medium text-white">Support</h4>
                   </div>
                   
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <Button
                       variant="outline"
-                      className="w-full justify-start bg-transparent border-gray-600 text-gray-300 hover:bg-gray-600"
+                      className="w-full justify-start glass border-white/20 text-gray-300 hover:bg-white/10 rounded-xl py-3"
                       disabled
                     >
                       <FileText className="mr-2 h-4 w-4" />
@@ -906,7 +900,7 @@ const WalletDashboard = () => {
                     </Button>
                     <Button
                       variant="outline"
-                      className="w-full justify-start bg-transparent border-gray-600 text-gray-300 hover:bg-gray-600"
+                      className="w-full justify-start glass border-white/20 text-gray-300 hover:bg-white/10 rounded-xl py-3"
                       disabled
                     >
                       <HelpCircle className="mr-2 h-4 w-4" />
@@ -916,10 +910,10 @@ const WalletDashboard = () => {
                 </div>
               </div>
 
-              <div className="mt-6">
+              <div className="mt-8">
                 <Button
                   onClick={() => setShowSettings(false)}
-                  className="w-full bg-gray-600 hover:bg-gray-700 text-white"
+                  className="w-full glass border-white/20 hover:bg-white/10 text-white rounded-xl py-3"
                 >
                   Close Settings
                 </Button>

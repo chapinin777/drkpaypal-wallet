@@ -64,17 +64,17 @@ const AssetsSection = () => {
 
   if (loading) {
     return (
-      <Card className="bg-gray-800 border-gray-700 shadow-lg">
+      <Card className="glass-card border-white/10 shadow-lg">
         <CardHeader>
           <CardTitle className="text-lg font-semibold text-white flex items-center">
-            <Wallet className="mr-2 h-5 w-5" />
+            <Wallet className="mr-2 h-5 w-5 text-purple-400" />
             Assets
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-            <div className="h-4 bg-gray-700 rounded w-1/2"></div>
+            <div className="h-4 glass-light rounded w-3/4 shimmer"></div>
+            <div className="h-4 glass-light rounded w-1/2 shimmer"></div>
           </div>
         </CardContent>
       </Card>
@@ -82,16 +82,18 @@ const AssetsSection = () => {
   }
 
   return (
-    <Card className="bg-gray-800 border-gray-700 shadow-lg">
+    <Card className="glass-card border-white/10 shadow-2xl hover-glow">
       <CardHeader>
         <CardTitle className="text-lg font-semibold text-white flex items-center justify-between">
           <div className="flex items-center">
-            <Wallet className="mr-2 h-5 w-5" />
+            <Wallet className="mr-2 h-5 w-5 text-purple-400" />
             Assets
           </div>
           <div className="text-right">
             <p className="text-sm text-gray-400">Total Value</p>
-            <p className="text-lg font-bold text-white">${totalValue.toFixed(2)}</p>
+            <p className="text-lg font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+              ${totalValue.toFixed(2)}
+            </p>
           </div>
         </CardTitle>
       </CardHeader>
@@ -100,32 +102,36 @@ const AssetsSection = () => {
           {assets.map((asset, index) => (
             <div 
               key={asset.id}
-              className={`flex items-center justify-between p-4 hover:bg-gray-700/50 transition-colors cursor-pointer ${
-                index !== assets.length - 1 ? 'border-b border-gray-700' : ''
+              className={`flex items-center justify-between p-4 hover:bg-white/5 transition-all duration-300 cursor-pointer border-white/5 ${
+                index !== assets.length - 1 ? 'border-b' : ''
               }`}
             >
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                  {asset.symbol === 'USD' ? <DollarSign className="h-5 w-5 text-white" /> :
-                   asset.symbol === 'BTC' ? <Bitcoin className="h-5 w-5 text-white" /> :
-                   <span className="text-white font-bold text-xs">{asset.symbol}</span>}
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${
+                  asset.symbol === 'USD' ? 'bg-gradient-to-br from-green-500 to-emerald-600' :
+                  asset.symbol === 'BTC' ? 'bg-gradient-to-br from-orange-500 to-yellow-600' :
+                  'bg-gradient-to-br from-blue-500 to-indigo-600'
+                }`}>
+                  {asset.symbol === 'USD' ? <DollarSign className="h-6 w-6 text-white" /> :
+                   asset.symbol === 'BTC' ? <Bitcoin className="h-6 w-6 text-white" /> :
+                   <span className="text-white font-bold text-sm">{asset.symbol}</span>}
                 </div>
                 <div>
                   <p className="text-white font-medium">{asset.name}</p>
-                  <p className="text-gray-400 text-sm">{asset.balance} {asset.symbol}</p>
+                  <p className="text-gray-400 text-sm font-mono">{asset.balance} {asset.symbol}</p>
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-white font-semibold">${asset.value.toFixed(2)}</p>
-                <div className="flex items-center space-x-1">
+                <div className="flex items-center space-x-2">
                   <p className="text-gray-400 text-sm">${asset.price.toLocaleString()}</p>
                   {asset.change24h !== 0 && (
                     <Badge 
                       variant={asset.change24h > 0 ? "default" : "destructive"}
                       className={`text-xs ${
                         asset.change24h > 0 
-                          ? 'bg-green-600 hover:bg-green-700' 
-                          : 'bg-red-600 hover:bg-red-700'
+                          ? 'bg-green-500/20 text-green-300 border-green-500/30' 
+                          : 'bg-red-500/20 text-red-300 border-red-500/30'
                       }`}
                     >
                       {asset.change24h > 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}

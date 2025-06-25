@@ -26,35 +26,35 @@ const EnhancedTransactionModal = ({ type, onClose, onConfirm }: EnhancedTransact
         return {
           title: 'Send Money',
           icon: <Send className="h-6 w-6" />,
-          color: 'bg-blue-600',
+          gradient: 'stripe-gradient',
           buttonText: 'Send Money'
         };
       case 'receive':
         return {
           title: 'Receive Money',
           icon: <ArrowDown className="h-6 w-6" />,
-          color: 'bg-green-600',
+          gradient: 'bg-gradient-to-br from-green-500 to-emerald-600',
           buttonText: 'Generate Request'
         };
       case 'deposit':
         return {
           title: 'Add Money',
           icon: <Plus className="h-6 w-6" />,
-          color: 'bg-purple-600',
+          gradient: 'bg-gradient-to-br from-purple-500 to-violet-600',
           buttonText: 'Add Money'
         };
       case 'withdraw':
         return {
           title: 'Withdraw Money',
           icon: <ArrowUp className="h-6 w-6" />,
-          color: 'bg-orange-600',
+          gradient: 'bg-gradient-to-br from-orange-500 to-red-600',
           buttonText: 'Withdraw Money'
         };
       default:
         return {
           title: 'Transaction',
           icon: <Wallet className="h-6 w-6" />,
-          color: 'bg-gray-600',
+          gradient: 'bg-gradient-to-br from-gray-500 to-gray-600',
           buttonText: 'Continue'
         };
     }
@@ -117,12 +117,12 @@ const EnhancedTransactionModal = ({ type, onClose, onConfirm }: EnhancedTransact
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-gray-800 border-gray-700">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md glass-strong border-white/20 shadow-2xl scale-in">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl font-semibold text-white flex items-center">
-              <div className={`w-10 h-10 rounded-full ${config.color} flex items-center justify-center mr-3`}>
+              <div className={`w-12 h-12 rounded-xl ${config.gradient} flex items-center justify-center mr-3 shadow-lg`}>
                 {config.icon}
               </div>
               {config.title}
@@ -131,7 +131,7 @@ const EnhancedTransactionModal = ({ type, onClose, onConfirm }: EnhancedTransact
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="text-gray-400 hover:text-white"
+              className="text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"
             >
               <X className="h-5 w-5" />
             </Button>
@@ -141,12 +141,12 @@ const EnhancedTransactionModal = ({ type, onClose, onConfirm }: EnhancedTransact
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Amount Input */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label htmlFor="amount" className="text-sm font-medium text-gray-300">
                 Amount (USD)
               </Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">$</span>
+                <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg">$</span>
                 <Input
                   id="amount"
                   type="number"
@@ -154,7 +154,7 @@ const EnhancedTransactionModal = ({ type, onClose, onConfirm }: EnhancedTransact
                   min="0.01"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="bg-gray-700 border-gray-600 text-white pl-8 focus:ring-blue-500 focus:border-blue-500"
+                  className="glass border-white/20 text-white pl-10 focus:ring-purple-500 focus:border-purple-500 rounded-xl text-lg py-3"
                   placeholder="0.00"
                 />
               </div>
@@ -162,7 +162,7 @@ const EnhancedTransactionModal = ({ type, onClose, onConfirm }: EnhancedTransact
 
             {/* Recipient Input (for send transactions) */}
             {type === 'send' && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <Label className="text-sm font-medium text-gray-300">Send To</Label>
                 
                 {/* Recipient Type Selector */}
@@ -172,7 +172,7 @@ const EnhancedTransactionModal = ({ type, onClose, onConfirm }: EnhancedTransact
                     variant={recipientType === 'email' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setRecipientType('email')}
-                    className={`flex-1 ${recipientType === 'email' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-700 hover:bg-gray-600'}`}
+                    className={`flex-1 rounded-xl ${recipientType === 'email' ? 'stripe-gradient' : 'glass border-white/20 hover:bg-white/10'}`}
                   >
                     <Mail className="h-4 w-4 mr-2" />
                     Email
@@ -182,7 +182,7 @@ const EnhancedTransactionModal = ({ type, onClose, onConfirm }: EnhancedTransact
                     variant={recipientType === 'wallet' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setRecipientType('wallet')}
-                    className={`flex-1 ${recipientType === 'wallet' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-700 hover:bg-gray-600'}`}
+                    className={`flex-1 rounded-xl ${recipientType === 'wallet' ? 'stripe-gradient' : 'glass border-white/20 hover:bg-white/10'}`}
                   >
                     <Wallet className="h-4 w-4 mr-2" />
                     Wallet ID
@@ -191,7 +191,7 @@ const EnhancedTransactionModal = ({ type, onClose, onConfirm }: EnhancedTransact
 
                 {/* Recipient Input */}
                 <div className="relative">
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
                     {recipientType === 'email' ? 
                       <Mail className="h-4 w-4 text-gray-400" /> : 
                       <Wallet className="h-4 w-4 text-gray-400" />
@@ -201,13 +201,13 @@ const EnhancedTransactionModal = ({ type, onClose, onConfirm }: EnhancedTransact
                     type={recipientType === 'email' ? 'email' : 'text'}
                     value={recipient}
                     onChange={(e) => setRecipient(e.target.value)}
-                    className="bg-gray-700 border-gray-600 text-white pl-10 focus:ring-blue-500 focus:border-blue-500"
+                    className="glass border-white/20 text-white pl-12 focus:ring-purple-500 focus:border-purple-500 rounded-xl py-3"
                     placeholder={recipientType === 'email' ? 'user@example.com' : '0x742d35A8f...'}
                   />
                 </div>
                 
                 <div className="flex items-center space-x-2 text-xs text-gray-400">
-                  <Badge variant="outline" className="text-gray-400 border-gray-600">
+                  <Badge variant="outline" className="text-gray-400 border-white/20">
                     <User className="h-3 w-3 mr-1" />
                     Platform transactions only
                   </Badge>
@@ -217,16 +217,16 @@ const EnhancedTransactionModal = ({ type, onClose, onConfirm }: EnhancedTransact
 
             {/* Receive Information */}
             {type === 'receive' && (
-              <div className="bg-gray-700 rounded-lg p-4 space-y-3">
+              <div className="glass-light rounded-xl p-5 space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-300 text-sm">Your Wallet ID:</span>
-                  <Badge variant="outline" className="text-gray-300 border-gray-600">
+                  <Badge variant="outline" className="text-gray-300 border-white/20 font-mono">
                     0x742d35A8f
                   </Badge>
                 </div>
-                <div className="flex items-center justify-center py-4">
-                  <div className="bg-white p-4 rounded-lg">
-                    <QrCode className="h-16 w-16 text-gray-800" />
+                <div className="flex items-center justify-center py-6">
+                  <div className="bg-white p-6 rounded-xl">
+                    <QrCode className="h-20 w-20 text-gray-800" />
                   </div>
                 </div>
                 <p className="text-xs text-gray-400 text-center">
@@ -239,9 +239,16 @@ const EnhancedTransactionModal = ({ type, onClose, onConfirm }: EnhancedTransact
             <Button
               type="submit"
               disabled={loading}
-              className={`w-full ${config.color} hover:opacity-90 text-white`}
+              className={`w-full ${config.gradient} hover:opacity-90 text-white rounded-xl py-3 font-medium text-base shadow-lg`}
             >
-              {loading ? 'Processing...' : config.buttonText}
+              {loading ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                  <span>Processing...</span>
+                </div>
+              ) : (
+                config.buttonText
+              )}
             </Button>
           </form>
         </CardContent>
