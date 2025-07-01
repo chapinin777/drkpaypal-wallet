@@ -47,6 +47,16 @@ const WalletDashboard = () => {
     }
   };
 
+  const handleModalConfirm = (type: string, amount: number, recipient?: string) => {
+    console.log('Transaction confirmed:', { type, amount, recipient });
+    setShowModal(false);
+    toast({
+      title: "Transaction Processed",
+      description: `${type} of $${amount} has been processed`,
+      variant: "default"
+    });
+  };
+
   return (
     <div className="min-h-screen mesh-bg p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -154,10 +164,9 @@ const WalletDashboard = () => {
         {/* Transaction Modal */}
         {showModal && (
           <EnhancedTransactionModal
-            isOpen={showModal}
-            onClose={() => setShowModal(false)}
             type={modalType}
-            balance={balance}
+            onClose={() => setShowModal(false)}
+            onConfirm={handleModalConfirm}
           />
         )}
       </div>

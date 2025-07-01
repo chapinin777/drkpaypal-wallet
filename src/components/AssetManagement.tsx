@@ -33,6 +33,10 @@ const AssetManagement = () => {
 
   const fetchData = async () => {
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
       // Fetch all currencies
       const { data: currenciesData, error: currenciesError } = await supabase
         .from('currencies')
@@ -47,7 +51,8 @@ const AssetManagement = () => {
         .select(`
           *,
           currency:currencies(*)
-        `);
+        `)
+        .eq('user_id', user.id);
 
       if (userAssetsError) throw userAssetsError;
 
@@ -67,6 +72,9 @@ const AssetManagement = () => {
 
   const toggleAssetVisibility = async (currencyId: string, currentVisibility: boolean) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
       const existingAsset = userAssets.find(asset => asset.currency_id === currencyId);
 
       if (existingAsset) {
@@ -82,6 +90,7 @@ const AssetManagement = () => {
         const { error } = await supabase
           .from('user_preferred_assets')
           .insert({
+            user_id: user.id,
             currency_id: currencyId,
             is_visible: !currentVisibility
           });

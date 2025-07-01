@@ -91,10 +91,14 @@ const SwapSection = () => {
 
     setIsSwapping(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
       // Add to transaction queue
       const { error } = await supabase
         .from('transaction_queue')
         .insert({
+          user_id: user.id,
           transaction_type: 'swap',
           from_currency_id: fromCurrency,
           to_currency_id: toCurrency,

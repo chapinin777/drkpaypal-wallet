@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, X, TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PricingTier {
   deposit: number;
@@ -27,7 +28,69 @@ const FloatingPricingButton = () => {
 
   const handleDeposit = async (tier: PricingTier) => {
     try {
-      // Simulate one-time deposit credit
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Get USD currency
+      const { data: usdCurrency } = await supabase
+        .from('currencies')
+        .select('id')
+        .eq('code', 'USD')
+        .single();
+
+      if (!usdCurrency) throw new Error('USD currency not found');
+
+      // Get user's USD wallet
+      const { data: wallet } = await supabase
+        .from('wallets')
+        .select('id, balance')
+        .eq('user_id', user.id)
+        .eq('currency_id', usdCurrency.id)
+        .single();
+
+      if (!wallet) throw new Error('Wallet not found');
+
+      // Update wallet balance
+      const { error: updateError } = await supabase
+        .from('wallets')
+        .update({ 
+          balance: wallet.balance + tier.receive,
+          available_balance: wallet.balance + tier.receive
+        })
+        .eq('id', wallet.id);
+
+      if (updateError) throw updateError;
+
+      // Add transaction record
+      const { data: transactionType } = await supabase
+        .from('transaction_types')
+        .select('id')
+        .eq('code', 'deposit')
+        .single();
+
+      const { data: statusCompleted } = await supabase
+        .from('transaction_statuses')
+        .select('id')
+        .eq('code', 'completed')
+        .single();
+
+      if (transactionType && statusCompleted) {
+        await supabase
+          .from('transactions')
+          .insert({
+            from_wallet_id: null,
+            to_wallet_id: wallet.id,
+            transaction_type_id: transactionType.id,
+            status_id: statusCompleted.id,
+            currency_id: usdCurrency.id,
+            amount: tier.receive,
+            net_amount: tier.receive,
+            fee: 0,
+            description: `One-time credit deposit of $${tier.deposit}`,
+            metadata: { pricing_tier: tier }
+          });
+      }
+
       toast({
         title: "Deposit Successful!",
         description: `$${tier.receive} has been credited to your account`,
@@ -35,6 +98,7 @@ const FloatingPricingButton = () => {
       });
       setIsOpen(false);
     } catch (error) {
+      console.error('Deposit failed:', error);
       toast({
         title: "Deposit Failed",
         description: "Unable to process deposit. Please try again.",
