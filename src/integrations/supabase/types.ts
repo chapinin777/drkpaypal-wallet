@@ -319,6 +319,48 @@ export type Database = {
         }
         Relationships: []
       }
+      swap_pairs: {
+        Row: {
+          exchange_rate: number
+          from_currency_id: string
+          id: string
+          is_active: boolean
+          to_currency_id: string
+          updated_at: string
+        }
+        Insert: {
+          exchange_rate: number
+          from_currency_id: string
+          id?: string
+          is_active?: boolean
+          to_currency_id: string
+          updated_at?: string
+        }
+        Update: {
+          exchange_rate?: number
+          from_currency_id?: string
+          id?: string
+          is_active?: boolean
+          to_currency_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "swap_pairs_from_currency_id_fkey"
+            columns: ["from_currency_id"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "swap_pairs_to_currency_id_fkey"
+            columns: ["to_currency_id"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transaction_logs: {
         Row: {
           changed_by: string | null
@@ -377,6 +419,76 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transaction_queue: {
+        Row: {
+          amount: number
+          created_at: string
+          error_message: string | null
+          from_currency_id: string | null
+          id: string
+          metadata: Json | null
+          processed_at: string | null
+          recipient_identifier: string | null
+          status: string
+          to_currency_id: string | null
+          transaction_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          error_message?: string | null
+          from_currency_id?: string | null
+          id?: string
+          metadata?: Json | null
+          processed_at?: string | null
+          recipient_identifier?: string | null
+          status?: string
+          to_currency_id?: string | null
+          transaction_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          error_message?: string | null
+          from_currency_id?: string | null
+          id?: string
+          metadata?: Json | null
+          processed_at?: string | null
+          recipient_identifier?: string | null
+          status?: string
+          to_currency_id?: string | null
+          transaction_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_queue_from_currency_id_fkey"
+            columns: ["from_currency_id"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_queue_to_currency_id_fkey"
+            columns: ["to_currency_id"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_queue_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -525,6 +637,48 @@ export type Database = {
           },
         ]
       }
+      user_preferred_assets: {
+        Row: {
+          created_at: string
+          currency_id: string
+          id: string
+          is_visible: boolean
+          sort_order: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency_id: string
+          id?: string
+          is_visible?: boolean
+          sort_order?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          currency_id?: string
+          id?: string
+          is_visible?: boolean
+          sort_order?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_preferred_assets_currency_id_fkey"
+            columns: ["currency_id"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_preferred_assets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wallets: {
         Row: {
           available_balance: number
@@ -584,7 +738,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_receive_qr_data: {
+        Args: { wallet_addr: string; amount?: number; currency_code?: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

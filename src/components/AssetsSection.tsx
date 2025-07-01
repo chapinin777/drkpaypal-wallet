@@ -2,7 +2,10 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, DollarSign, Bitcoin, Wallet } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { TrendingUp, TrendingDown, DollarSign, Bitcoin, Wallet, Settings } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import AssetManagement from './AssetManagement';
 
 interface Asset {
   id: string;
@@ -12,15 +15,50 @@ interface Asset {
   value: number;
   change24h: number;
   price: number;
+  wallet_address?: string;
 }
 
 const AssetsSection = () => {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
-    // Simulate real-time market data
-    const fetchMarketData = () => {
+    fetchAssets();
+  }, []);
+
+  const fetchAssets = async () => {
+    try {
+      // Fetch user's wallets with preferred assets
+      const { data: walletsData, error: walletsError } = await supabase
+        .from('wallets')
+        .select(`
+          *,
+          currency:currencies(*),
+          user_preferred_assets!inner(is_visible)
+        `)
+        .eq('is_active', true)
+        .eq('user_preferred_assets.is_visible', true);
+
+      if (walletsError) throw walletsError;
+
+      // Transform wallet data to assets format
+      const transformedAssets: Asset[] = (walletsData || []).map(wallet => ({
+        id: wallet.id,
+        name: wallet.currency.name,
+        symbol: wallet.currency.code,
+        balance: wallet.balance,
+        value: wallet.balance, // For simplicity, assuming 1:1 for USD
+        change24h: wallet.currency.code === 'USD' ? 0 : Math.random() * 10 - 5, // Mock data
+        price: wallet.currency.code === 'USD' ? 1 : 
+               wallet.currency.code === 'BTC' ? 100000 : 4000,
+        wallet_address: wallet.wallet_address
+      }));
+
+      setAssets(transformedAssets);
+    } catch (error) {
+      console.error('Failed to fetch assets:', error);
+      // Fallback to mock data
       const mockAssets: Asset[] = [
         {
           id: '1',
@@ -29,7 +67,8 @@ const AssetsSection = () => {
           balance: 1250.00,
           value: 1250.00,
           change24h: 0,
-          price: 1.00
+          price: 1.00,
+          wallet_address: '0x742d35Cc6634C0532925a3b8d76c3E'
         },
         {
           id: '2',
@@ -38,27 +77,15 @@ const AssetsSection = () => {
           balance: 0.0234,
           value: 2340.50,
           change24h: 2.4,
-          price: 100000
-        },
-        {
-          id: '3',
-          name: 'Ethereum',
-          symbol: 'ETH',
-          balance: 0.87,
-          value: 3480.00,
-          change24h: -1.2,
-          price: 4000
+          price: 100000,
+          wallet_address: '0x8f3c7E9a4d6B2c1A5e8F9d2C3b4A6E7'
         }
       ];
       setAssets(mockAssets);
+    } finally {
       setLoading(false);
-    };
-
-    fetchMarketData();
-    const interval = setInterval(fetchMarketData, 30000); // Update every 30 seconds
-
-    return () => clearInterval(interval);
-  }, []);
+    }
+  };
 
   const totalValue = assets.reduce((sum, asset) => sum + asset.value, 0);
 
@@ -81,6 +108,10 @@ const AssetsSection = () => {
     );
   }
 
+  if (showSettings) {
+    return <AssetManagement />;
+  }
+
   return (
     <Card className="glass-card border-white/10 shadow-2xl hover-glow">
       <CardHeader>
@@ -89,11 +120,21 @@ const AssetsSection = () => {
             <Wallet className="mr-2 h-5 w-5 text-purple-400" />
             Assets
           </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-400">Total Value</p>
-            <p className="text-lg font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-              ${totalValue.toFixed(2)}
-            </p>
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowSettings(true)}
+              className="text-white hover:bg-white/10"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+            <div className="text-right">
+              <p className="text-sm text-gray-400">Total Value</p>
+              <p className="text-lg font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                ${totalValue.toFixed(2)}
+              </p>
+            </div>
           </div>
         </CardTitle>
       </CardHeader>
@@ -119,6 +160,11 @@ const AssetsSection = () => {
                 <div>
                   <p className="text-white font-medium">{asset.name}</p>
                   <p className="text-gray-400 text-sm font-mono">{asset.balance} {asset.symbol}</p>
+                  {asset.wallet_address && (
+                    <p className="text-gray-500 text-xs font-mono">
+                      {asset.wallet_address.slice(0, 10)}...
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="text-right">
