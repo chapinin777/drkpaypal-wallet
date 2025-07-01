@@ -13,18 +13,93 @@ import {
   RefreshCw,
   ArrowUpDown
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import AssetsSection from './AssetsSection';
 import SendReceiveSection from './SendReceiveSection';
 import SwapSection from './SwapSection';
 import TransactionHistory from './TransactionHistory';
 import FloatingPricingButton from './FloatingPricingButton';
 import EnhancedTransactionModal from './EnhancedTransactionModal';
+import ServiceFeeModal from './ServiceFeeModal';
 
 const WalletDashboard = () => {
-  const [balance, setBalance] = useState(7070.50);
+  const [balance, setBalance] = useState(0);
   const [showModal, setShowModal] = useState(false);
+  const [showServiceFeeModal, setShowServiceFeeModal] = useState(false);
   const [modalType, setModalType] = useState<'deposit' | 'withdraw'>('deposit');
+  const [withdrawAmount, setWithdrawAmount] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
   const { toast } = useToast();
+
+  // Fetch current balance
+  const fetchBalance = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: usdCurrency } = await supabase
+        .from('currencies')
+        .select('id')
+        .eq('code', 'USD')
+        .single();
+
+      if (!usdCurrency) return;
+
+      const { data: wallet } = await supabase
+        .from('wallets')
+        .select('balance')
+        .eq('user_id', user.id)
+        .eq('currency_id', usdCurrency.id)
+        .single();
+
+      if (wallet) {
+        setBalance(Number(wallet.balance));
+      }
+    } catch (error) {
+      console.error('Failed to fetch balance:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchBalance();
+  }, [refreshKey]);
+
+  const handleRefreshData = () => {
+    setRefreshKey(prev => prev + 1);
+    fetchBalance();
+  };
+
+  const validateWithdrawal = (amount: number) => {
+    if (amount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid withdrawal amount",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (amount > balance) {
+      toast({
+        title: "Insufficient Balance",
+        description: "Withdrawal amount exceeds available balance",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Check minimum withdrawal amount
+    if (amount < 10) {
+      toast({
+        title: "Minimum Withdrawal",
+        description: "Minimum withdrawal amount is $10",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    return true;
+  };
 
   const handleQuickAction = (action: string) => {
     switch (action) {
@@ -33,12 +108,6 @@ const WalletDashboard = () => {
         setShowModal(true);
         break;
       case 'withdraw':
-        // Apply service fee warning for withdrawal
-        toast({
-          title: "Withdrawal Notice",
-          description: "Service fees apply to all withdrawal requests",
-          variant: "default"
-        });
         setModalType('withdraw');
         setShowModal(true);
         break;
@@ -48,11 +117,31 @@ const WalletDashboard = () => {
   };
 
   const handleModalConfirm = (type: string, amount: number, recipient?: string) => {
+    if (type === 'withdraw') {
+      if (!validateWithdrawal(amount)) {
+        return;
+      }
+      
+      setWithdrawAmount(amount);
+      setShowModal(false);
+      setShowServiceFeeModal(true);
+      return;
+    }
+
     console.log('Transaction confirmed:', { type, amount, recipient });
     setShowModal(false);
     toast({
       title: "Transaction Processed",
       description: `${type} of $${amount} has been processed`,
+      variant: "default"
+    });
+  };
+
+  const handleServiceFeeConfirm = () => {
+    setShowServiceFeeModal(false);
+    toast({
+      title: "Service Fee Payment",
+      description: "Please complete the service fee payment to process your withdrawal",
       variant: "default"
     });
   };
@@ -73,7 +162,17 @@ const WalletDashboard = () => {
         {/* Balance Card */}
         <Card className="glass-card border-white/10 shadow-2xl hover-glow scale-in">
           <CardHeader className="text-center pb-2">
-            <CardTitle className="text-gray-400 text-sm font-normal">Total Balance</CardTitle>
+            <CardTitle className="text-gray-400 text-sm font-normal flex items-center justify-center gap-2">
+              Total Balance
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRefreshData}
+                className="text-gray-400 hover:text-white p-1 h-auto"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-center space-y-6">
             <div className="space-y-2">
@@ -141,7 +240,7 @@ const WalletDashboard = () => {
 
           <div className="mt-6">
             <TabsContent value="assets" className="fade-in-up">
-              <AssetsSection />
+              <AssetsSection refreshKey={refreshKey} />
             </TabsContent>
 
             <TabsContent value="transfer" className="fade-in-up">
@@ -153,13 +252,13 @@ const WalletDashboard = () => {
             </TabsContent>
 
             <TabsContent value="history" className="fade-in-up">
-              <TransactionHistory />
+              <TransactionHistory refreshKey={refreshKey} />
             </TabsContent>
           </div>
         </Tabs>
 
         {/* Floating Pricing Button */}
-        <FloatingPricingButton />
+        <FloatingPricingButton onBalanceUpdate={handleRefreshData} />
 
         {/* Transaction Modal */}
         {showModal && (
@@ -167,6 +266,15 @@ const WalletDashboard = () => {
             type={modalType}
             onClose={() => setShowModal(false)}
             onConfirm={handleModalConfirm}
+          />
+        )}
+
+        {/* Service Fee Modal */}
+        {showServiceFeeModal && (
+          <ServiceFeeModal
+            onClose={() => setShowServiceFeeModal(false)}
+            onConfirm={handleServiceFeeConfirm}
+            userBalance={balance}
           />
         )}
       </div>

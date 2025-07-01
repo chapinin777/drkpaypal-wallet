@@ -13,8 +13,13 @@ interface PricingTier {
   roi: number;
 }
 
-const FloatingPricingButton = () => {
+interface FloatingPricingButtonProps {
+  onBalanceUpdate?: () => void;
+}
+
+const FloatingPricingButton = ({ onBalanceUpdate }: FloatingPricingButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   const pricingTiers: PricingTier[] = [
@@ -27,45 +32,43 @@ const FloatingPricingButton = () => {
   ];
 
   const handleDeposit = async (tier: PricingTier) => {
+    if (loading) return;
+    
+    setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
       // Get USD currency
-      const { data: usdCurrency } = await supabase
+      const { data: usdCurrency, error: currencyError } = await supabase
         .from('currencies')
         .select('id')
         .eq('code', 'USD')
         .single();
 
-      if (!usdCurrency) throw new Error('USD currency not found');
+      if (currencyError || !usdCurrency) throw new Error('USD currency not found');
 
       // Get user's USD wallet
-      const { data: wallet } = await supabase
+      const { data: wallet, error: walletError } = await supabase
         .from('wallets')
-        .select('id, balance')
+        .select('id, balance, available_balance')
         .eq('user_id', user.id)
         .eq('currency_id', usdCurrency.id)
         .single();
 
-      if (!wallet) throw new Error('Wallet not found');
+      if (walletError || !wallet) throw new Error('Wallet not found');
 
-      // Update wallet balance
-      const { error: updateError } = await supabase
-        .from('wallets')
-        .update({ 
-          balance: wallet.balance + tier.receive,
-          available_balance: wallet.balance + tier.receive
-        })
-        .eq('id', wallet.id);
-
-      if (updateError) throw updateError;
-
-      // Add transaction record
+      // Get transaction type and status
       const { data: transactionType } = await supabase
         .from('transaction_types')
         .select('id')
         .eq('code', 'deposit')
+        .single();
+
+      const { data: statusPending } = await supabase
+        .from('transaction_statuses')
+        .select('id')
+        .eq('code', 'pending')
         .single();
 
       const { data: statusCompleted } = await supabase
@@ -74,41 +77,95 @@ const FloatingPricingButton = () => {
         .eq('code', 'completed')
         .single();
 
-      if (transactionType && statusCompleted) {
-        await supabase
-          .from('transactions')
-          .insert({
-            to_wallet_id: wallet.id,
-            transaction_type_id: transactionType.id,
-            status_id: statusCompleted.id,
-            currency_id: usdCurrency.id,
-            amount: tier.receive,
-            net_amount: tier.receive,
-            fee: 0,
-            description: `One-time credit deposit of $${tier.deposit}`,
-            metadata: {
-              pricing_tier: {
-                deposit: tier.deposit,
-                receive: tier.receive,
-                roi: tier.roi
-              }
-            }
-          });
+      if (!transactionType || !statusPending || !statusCompleted) {
+        throw new Error('Transaction configuration not found');
       }
 
+      // First create pending transaction
+      const { data: pendingTransaction, error: pendingError } = await supabase
+        .from('transactions')
+        .insert({
+          to_wallet_id: wallet.id,
+          transaction_type_id: transactionType.id,
+          status_id: statusPending.id,
+          currency_id: usdCurrency.id,
+          amount: tier.receive,
+          net_amount: tier.receive,
+          fee: 0,
+          description: `One-time credit deposit of $${tier.deposit} (Pending)`,
+          metadata: {
+            pricing_tier: {
+              deposit: tier.deposit,
+              receive: tier.receive,
+              roi: tier.roi
+            }
+          }
+        })
+        .select()
+        .single();
+
+      if (pendingError) throw pendingError;
+
+      // Show pending status
       toast({
-        title: "Deposit Successful!",
-        description: `$${tier.receive} has been credited to your account`,
+        title: "Transaction Pending",
+        description: `$${tier.receive} credit is being processed...`,
         variant: "default"
       });
+
+      // Simulate processing time, then complete the transaction
+      setTimeout(async () => {
+        try {
+          // Update transaction to completed
+          await supabase
+            .from('transactions')
+            .update({
+              status_id: statusCompleted.id,
+              description: `One-time credit deposit of $${tier.deposit}`,
+              completed_at: new Date().toISOString()
+            })
+            .eq('id', pendingTransaction.id);
+
+          // Update wallet balance
+          await supabase
+            .from('wallets')
+            .update({ 
+              balance: wallet.balance + tier.receive,
+              available_balance: wallet.available_balance + tier.receive,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', wallet.id);
+
+          toast({
+            title: "Deposit Successful!",
+            description: `$${tier.receive} has been credited to your account`,
+            variant: "default"
+          });
+
+          // Trigger balance refresh
+          if (onBalanceUpdate) {
+            onBalanceUpdate();
+          }
+        } catch (error) {
+          console.error('Failed to complete transaction:', error);
+          toast({
+            title: "Transaction Error",
+            description: "Failed to complete deposit. Please contact support.",
+            variant: "destructive"
+          });
+        }
+      }, 2000);
+
       setIsOpen(false);
     } catch (error) {
       console.error('Deposit failed:', error);
       toast({
         title: "Deposit Failed",
-        description: "Unable to process deposit. Please try again.",
+        description: error instanceof Error ? error.message : "Unable to process deposit. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -144,7 +201,7 @@ const FloatingPricingButton = () => {
               {pricingTiers.map((tier, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-3 glass-light rounded-lg hover:bg-white/10 transition-all cursor-pointer"
+                  className={`flex items-center justify-between p-3 glass-light rounded-lg hover:bg-white/10 transition-all cursor-pointer ${loading ? 'opacity-50 pointer-events-none' : ''}`}
                   onClick={() => handleDeposit(tier)}
                 >
                   <div>
