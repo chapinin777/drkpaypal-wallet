@@ -78,7 +78,6 @@ const FloatingPricingButton = () => {
         await supabase
           .from('transactions')
           .insert({
-            from_wallet_id: null,
             to_wallet_id: wallet.id,
             transaction_type_id: transactionType.id,
             status_id: statusCompleted.id,
@@ -87,7 +86,13 @@ const FloatingPricingButton = () => {
             net_amount: tier.receive,
             fee: 0,
             description: `One-time credit deposit of $${tier.deposit}`,
-            metadata: { pricing_tier: tier }
+            metadata: {
+              pricing_tier: {
+                deposit: tier.deposit,
+                receive: tier.receive,
+                roi: tier.roi
+              }
+            }
           });
       }
 
