@@ -1,16 +1,18 @@
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { DollarSign } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface FloatingPricingButtonProps {
   onBalanceUpdate?: () => void;
 }
 
 const FloatingPricingButton = ({ onBalanceUpdate }: FloatingPricingButtonProps) => {
+  const navigate = useNavigate();
+
   const handleAddBalance = () => {
-    // Navigate to offramp route for PayPal deposit
-    window.location.href = '/offramp';
+    // Navigate to offramp route to trigger the modal
+    navigate('/offramp');
   };
 
   return (

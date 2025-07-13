@@ -4,13 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, CreditCard } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { X, CreditCard } from 'lucide-react';
 import PayPalDepositButton from '@/components/PayPalDepositButton';
 
-const Offramp = () => {
+interface OfframpProps {
+  onClose?: () => void;
+}
+
+const Offramp = ({ onClose }: OfframpProps) => {
   const [amount, setAmount] = useState('');
-  const navigate = useNavigate();
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -19,22 +21,38 @@ const Offramp = () => {
     }
   };
 
+  const handleSuccess = () => {
+    setAmount('');
+    setTimeout(() => {
+      if (onClose) {
+        onClose();
+      }
+    }, 2000);
+  };
+
   return (
-    <div className="min-h-screen mesh-bg p-6">
+    <div className="min-h-[600px] mesh-bg p-6 rounded-lg relative">
+      {/* Close Button */}
+      {onClose && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="absolute top-4 right-4 z-10 text-white hover:bg-white/10 rounded-full"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
+
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center space-x-4 fade-in-up">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/')}
-            className="text-white hover:bg-white/10"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Wallet
-          </Button>
+        <div className="text-center fade-in-up">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent">
             Add Balance
           </h1>
+          <p className="text-gray-300 mt-2">
+            Securely add funds to your wallet using PayPal
+          </p>
         </div>
 
         {/* PayPal Deposit Card */}
@@ -71,10 +89,7 @@ const Offramp = () => {
 
             <PayPalDepositButton 
               amount={Number(amount)} 
-              onSuccess={() => {
-                setAmount('');
-                setTimeout(() => navigate('/'), 2000);
-              }}
+              onSuccess={handleSuccess}
             />
 
             <div className="text-xs text-gray-500 text-center">
