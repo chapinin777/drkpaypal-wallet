@@ -18,6 +18,7 @@ interface Wallet {
   balance: number;
   available_balance: number;
   currency: {
+    id: string;
     code: string;
     name: string;
     symbol: string;
@@ -45,7 +46,7 @@ const AssetsSection = ({ refreshKey }: AssetsSectionProps) => {
           id,
           balance,
           available_balance,
-          currency:currencies(code, name, symbol)
+          currency:currencies(id, code, name, symbol)
         `)
         .eq('user_id', user.id)
         .eq('is_active', true);

@@ -31,7 +31,7 @@ const WalletDashboard = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const { toast } = useToast();
 
-  // Fetch current balance
+  // Fetch current balance from Supabase (not wallet connect balance)
   const fetchBalance = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -69,6 +69,11 @@ const WalletDashboard = () => {
     fetchBalance();
   };
 
+  // Calculate 5% fee rounded to whole number
+  const calculateWithdrawalFee = (amount: number) => {
+    return Math.round(amount * 0.05);
+  };
+
   const validateWithdrawal = (amount: number) => {
     if (amount <= 0) {
       toast({
@@ -98,14 +103,24 @@ const WalletDashboard = () => {
       return false;
     }
 
+    // Check maximum withdrawal amount
+    if (amount > 10000) {
+      toast({
+        title: "Maximum Withdrawal Exceeded",
+        description: "Maximum withdrawal amount is $10,000 per transaction",
+        variant: "destructive"
+      });
+      return false;
+    }
+
     return true;
   };
 
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'deposit':
-        setModalType('deposit');
-        setShowModal(true);
+        // Redirect to offramp route
+        window.location.href = '/offramp';
         break;
       case 'withdraw':
         setModalType('withdraw');
@@ -116,34 +131,111 @@ const WalletDashboard = () => {
     }
   };
 
-  const handleModalConfirm = (type: string, amount: number, recipient?: string) => {
+  const handleModalConfirm = async (type: string, amount: number, recipient?: string) => {
     if (type === 'withdraw') {
       if (!validateWithdrawal(amount)) {
         return;
       }
       
+      const fee = calculateWithdrawalFee(amount);
       setWithdrawAmount(amount);
       setShowModal(false);
       setShowServiceFeeModal(true);
+      
+      toast({
+        title: "Withdrawal Fee Required",
+        description: `Withdrawal fee: $${fee} (5% of $${amount})`,
+        variant: "default"
+      });
       return;
     }
 
     console.log('Transaction confirmed:', { type, amount, recipient });
     setShowModal(false);
-    toast({
-      title: "Transaction Processed",
-      description: `${type} of $${amount} has been processed`,
-      variant: "default"
-    });
   };
 
-  const handleServiceFeeConfirm = () => {
-    setShowServiceFeeModal(false);
-    toast({
-      title: "Service Fee Payment",
-      description: "Please complete the service fee payment to process your withdrawal",
-      variant: "default"
-    });
+  const handleServiceFeeConfirm = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const fee = calculateWithdrawalFee(withdrawAmount);
+      
+      // Get USD currency and wallet
+      const { data: usdCurrency } = await supabase
+        .from('currencies')
+        .select('id')
+        .eq('code', 'USD')
+        .single();
+
+      const { data: wallet } = await supabase
+        .from('wallets')
+        .select('id, balance, pending_balance')
+        .eq('user_id', user.id)
+        .eq('currency_id', usdCurrency.id)
+        .single();
+
+      if (!wallet) throw new Error('Wallet not found');
+
+      // ACID Transaction: Move balance to pending_balance
+      const { error: updateError } = await supabase
+        .from('wallets')
+        .update({
+          balance: wallet.balance - withdrawAmount,
+          pending_balance: wallet.pending_balance + withdrawAmount,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', wallet.id);
+
+      if (updateError) throw updateError;
+
+      // Log withdrawal transaction
+      const { data: withdrawType } = await supabase
+        .from('transaction_types')
+        .select('id')
+        .eq('code', 'withdraw')
+        .single();
+
+      const { data: pendingStatus } = await supabase
+        .from('transaction_statuses')
+        .select('id')
+        .eq('code', 'pending')
+        .single();
+
+      await supabase
+        .from('transactions')
+        .insert({
+          from_wallet_id: wallet.id,
+          transaction_type_id: withdrawType.id,
+          status_id: pendingStatus.id,
+          currency_id: usdCurrency.id,
+          amount: withdrawAmount,
+          fee: fee,
+          net_amount: withdrawAmount - fee,
+          description: `Withdrawal pending service fee payment - $${fee} fee required`,
+          metadata: {
+            withdrawal_fee: fee,
+            original_amount: withdrawAmount,
+            fee_percentage: 5
+          }
+        });
+
+      setShowServiceFeeModal(false);
+      handleRefreshData();
+      
+      toast({
+        title: "Withdrawal Initiated",
+        description: `$${withdrawAmount} moved to pending. Complete fee payment to process withdrawal.`,
+        variant: "default"
+      });
+    } catch (error) {
+      console.error('Withdrawal error:', error);
+      toast({
+        title: "Withdrawal Failed",
+        description: "Unable to process withdrawal. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -159,7 +251,7 @@ const WalletDashboard = () => {
           </p>
         </div>
 
-        {/* Balance Card */}
+        {/* Balance Card - Display Supabase balance only */}
         <Card className="glass-card border-white/10 shadow-2xl hover-glow scale-in">
           <CardHeader className="text-center pb-2">
             <CardTitle className="text-gray-400 text-sm font-normal flex items-center justify-center gap-2">
@@ -192,7 +284,7 @@ const WalletDashboard = () => {
                 className="btn-glass hover:scale-105 transition-all duration-300 bg-gradient-to-r from-green-600/20 to-emerald-600/20 border-green-500/30 text-green-300 hover:from-green-600/30 hover:to-emerald-600/30"
               >
                 <Download className="h-4 w-4 mr-2" />
-                Deposit
+                Add Balance
               </Button>
               <Button 
                 onClick={() => handleQuickAction('withdraw')}
@@ -257,7 +349,7 @@ const WalletDashboard = () => {
           </div>
         </Tabs>
 
-        {/* Floating Pricing Button */}
+        {/* Floating Add Balance Button */}
         <FloatingPricingButton onBalanceUpdate={handleRefreshData} />
 
         {/* Transaction Modal */}
@@ -275,6 +367,8 @@ const WalletDashboard = () => {
             onClose={() => setShowServiceFeeModal(false)}
             onConfirm={handleServiceFeeConfirm}
             userBalance={balance}
+            withdrawalAmount={withdrawAmount}
+            calculatedFee={calculateWithdrawalFee(withdrawAmount)}
           />
         )}
       </div>

