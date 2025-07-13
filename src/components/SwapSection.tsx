@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowUpDown, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { coinGeckoService } from '@/services/coingeckoApi';
 
 interface Currency {
   id: string;
@@ -15,28 +16,20 @@ interface Currency {
   symbol: string;
 }
 
-interface SwapPair {
-  id: string;
-  from_currency_id: string;
-  to_currency_id: string;
-  exchange_rate: number;
-}
-
 const SwapSection = () => {
   const [currencies, setCurrencies] = useState<Currency[]>([]);
-  const [swapPairs, setSwapPairs] = useState<SwapPair[]>([]);
   const [fromCurrency, setFromCurrency] = useState('');
   const [toCurrency, setToCurrency] = useState('');
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
   const [isSwapping, setIsSwapping] = useState(false);
   const [exchangeRate, setExchangeRate] = useState(0);
+  const [isLoadingRate, setIsLoadingRate] = useState(false);
   
   const { toast } = useToast();
 
   useEffect(() => {
     fetchCurrencies();
-    fetchSwapPairs();
   }, []);
 
   useEffect(() => {
@@ -56,26 +49,34 @@ const SwapSection = () => {
     }
   };
 
-  const fetchSwapPairs = async () => {
-    const { data, error } = await supabase
-      .from('swap_pairs')
-      .select('*')
-      .eq('is_active', true);
-    
-    if (data && !error) {
-      setSwapPairs(data);
-    }
-  };
+  const calculateSwapAmount = async () => {
+    if (!fromCurrency || !toCurrency || !fromAmount) return;
 
-  const calculateSwapAmount = () => {
-    const pair = swapPairs.find(p => 
-      p.from_currency_id === fromCurrency && p.to_currency_id === toCurrency
-    );
-    
-    if (pair && fromAmount) {
-      const amount = parseFloat(fromAmount) * pair.exchange_rate;
+    setIsLoadingRate(true);
+    try {
+      const fromCurrencyData = currencies.find(c => c.id === fromCurrency);
+      const toCurrencyData = currencies.find(c => c.id === toCurrency);
+      
+      if (!fromCurrencyData || !toCurrencyData) return;
+
+      // Get real-time exchange rate from CoinGecko
+      const rate = await coinGeckoService.getExchangeRate(
+        fromCurrencyData.code,
+        toCurrencyData.code
+      );
+      
+      const amount = parseFloat(fromAmount) * rate;
       setToAmount(amount.toFixed(8));
-      setExchangeRate(pair.exchange_rate);
+      setExchangeRate(rate);
+    } catch (error) {
+      console.error('Failed to get exchange rate:', error);
+      toast({
+        title: "Rate Fetch Failed",
+        description: "Unable to get current exchange rate. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingRate(false);
     }
   };
 
@@ -94,36 +95,62 @@ const SwapSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Add to transaction queue
-      const { error } = await supabase
-        .from('transaction_queue')
-        .insert({
-          user_id: user.id,
-          transaction_type: 'swap',
-          from_currency_id: fromCurrency,
-          to_currency_id: toCurrency,
-          amount: parseFloat(fromAmount),
-          metadata: {
-            exchange_rate: exchangeRate,
-            to_amount: parseFloat(toAmount)
-          }
-        });
+      // ACID Transaction: Check and update balances atomically
+      const { data: fromWallet } = await supabase
+        .from('wallets')
+        .select('id, balance')
+        .eq('user_id', user.id)
+        .eq('currency_id', fromCurrency)
+        .single();
 
-      if (error) throw error;
+      if (!fromWallet) throw new Error('From wallet not found');
+
+      const swapAmount = parseFloat(fromAmount);
+      if (fromWallet.balance < swapAmount) {
+        throw new Error('Insufficient balance');
+      }
+
+      // Get transaction type and status IDs
+      const { data: swapType } = await supabase
+        .from('transaction_types')
+        .select('id')
+        .eq('code', 'swap')
+        .single();
+
+      const { data: completedStatus } = await supabase
+        .from('transaction_statuses')
+        .select('id')
+        .eq('code', 'completed')
+        .single();
+
+      // ACID Transaction: Update both wallets and create transaction record
+      const { error: swapError } = await supabase.rpc('execute_swap_transaction', {
+        p_user_id: user.id,
+        p_from_currency_id: fromCurrency,
+        p_to_currency_id: toCurrency,
+        p_from_amount: swapAmount,
+        p_to_amount: parseFloat(toAmount),
+        p_exchange_rate: exchangeRate,
+        p_transaction_type_id: swapType?.id,
+        p_status_id: completedStatus?.id
+      });
+
+      if (swapError) throw swapError;
 
       toast({
-        title: "Swap Initiated",
-        description: `Swapping ${fromAmount} to ${toAmount}`,
+        title: "Swap Successful",
+        description: `Swapped ${fromAmount} to ${toAmount}`,
         variant: "default"
       });
 
       setFromAmount('');
       setToAmount('');
+      setExchangeRate(0);
     } catch (error) {
       console.error('Swap failed:', error);
       toast({
         title: "Swap Failed",
-        description: "Unable to process swap. Please try again.",
+        description: error instanceof Error ? error.message : "Unable to process swap. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -213,15 +240,23 @@ const SwapSection = () => {
 
         {exchangeRate > 0 && (
           <div className="glass-light p-3 rounded-lg">
-            <p className="text-gray-400 text-sm">
-              Exchange Rate: 1 = {exchangeRate.toFixed(8)}
+            <div className="flex items-center justify-between">
+              <p className="text-gray-400 text-sm">
+                Live Exchange Rate: 1 = {exchangeRate.toFixed(8)}
+              </p>
+              {isLoadingRate && (
+                <RefreshCw className="h-4 w-4 text-gray-400 animate-spin" />
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Powered by CoinGecko • Real-time rates
             </p>
           </div>
         )}
 
         <Button 
           onClick={handleSwap}
-          disabled={isSwapping || !fromCurrency || !toCurrency || !fromAmount}
+          disabled={isSwapping || !fromCurrency || !toCurrency || !fromAmount || isLoadingRate}
           className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
         >
           {isSwapping ? (

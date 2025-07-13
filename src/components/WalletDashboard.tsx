@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,8 @@ import TransactionHistory from './TransactionHistory';
 import FloatingPricingButton from './FloatingPricingButton';
 import EnhancedTransactionModal from './EnhancedTransactionModal';
 import ServiceFeeModal from './ServiceFeeModal';
+import LivePricing from './LivePricing';
+import CryptoNews from './CryptoNews';
 
 const WalletDashboard = () => {
   const [balance, setBalance] = useState(0);
@@ -251,7 +252,7 @@ const WalletDashboard = () => {
           </p>
         </div>
 
-        {/* Balance Card - Display Supabase balance only */}
+        {/* Balance Card */}
         <Card className="glass-card border-white/10 shadow-2xl hover-glow scale-in">
           <CardHeader className="text-center pb-2">
             <CardTitle className="text-gray-400 text-sm font-normal flex items-center justify-center gap-2">
@@ -296,6 +297,12 @@ const WalletDashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Live Pricing and News Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <LivePricing />
+          <CryptoNews />
+        </div>
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="assets" className="w-full">
