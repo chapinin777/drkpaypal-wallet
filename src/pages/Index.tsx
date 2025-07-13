@@ -3,7 +3,12 @@ import { useAuth } from '@/hooks/useAuth';
 import WalletAuth from '@/components/WalletAuth';
 import WalletDashboard from '@/components/WalletDashboard';
 
-const Index = () => {
+interface IndexProps {
+  onOpenAuth?: () => void;
+  onOpenOfframp?: () => void;
+}
+
+const Index = ({ onOpenAuth, onOpenOfframp }: IndexProps) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -17,7 +22,11 @@ const Index = () => {
     );
   }
 
-  return user ? <WalletDashboard /> : <WalletAuth />;
+  return user ? (
+    <WalletDashboard onOpenOfframp={onOpenOfframp} />
+  ) : (
+    <WalletAuth onOpenAuth={onOpenAuth} />
+  );
 };
 
 export default Index;

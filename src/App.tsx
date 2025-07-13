@@ -3,47 +3,37 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Offramp from "./pages/Offramp";
-import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const AppWithModal = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [isOfframpOpen, setIsOfframpOpen] = useState(false);
-
-  useEffect(() => {
-    if (location.pathname === '/offramp') {
-      setIsOfframpOpen(true);
-    } else {
-      setIsOfframpOpen(false);
-    }
-  }, [location.pathname]);
-
-  const handleOfframpClose = () => {
-    setIsOfframpOpen(false);
-    navigate('/', { replace: true });
-  };
+const AppContent = () => {
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [offrampModalOpen, setOfframpModalOpen] = useState(false);
 
   return (
     <>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/offramp" element={<Index />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <Index 
+        onOpenAuth={() => setAuthModalOpen(true)}
+        onOpenOfframp={() => setOfframpModalOpen(true)}
+      />
       
-      <Dialog open={isOfframpOpen} onOpenChange={handleOfframpClose}>
+      {/* Auth Modal */}
+      <Dialog open={authModalOpen} onOpenChange={setAuthModalOpen}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0 bg-transparent border-0">
+          <Auth onClose={() => setAuthModalOpen(false)} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Offramp Modal */}
+      <Dialog open={offrampModalOpen} onOpenChange={setOfframpModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 bg-transparent border-0">
-          <Offramp onClose={handleOfframpClose} />
+          <Offramp onClose={() => setOfframpModalOpen(false)} />
         </DialogContent>
       </Dialog>
     </>
@@ -56,9 +46,7 @@ const App = () => (
       <AuthProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <AppWithModal />
-        </BrowserRouter>
+        <AppContent />
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

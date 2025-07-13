@@ -1,18 +1,17 @@
 
 import { Button } from '@/components/ui/button';
 import { DollarSign } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 interface FloatingPricingButtonProps {
   onBalanceUpdate?: () => void;
+  onOpenOfframp?: () => void;
 }
 
-const FloatingPricingButton = ({ onBalanceUpdate }: FloatingPricingButtonProps) => {
-  const navigate = useNavigate();
-
+const FloatingPricingButton = ({ onBalanceUpdate, onOpenOfframp }: FloatingPricingButtonProps) => {
   const handleAddBalance = () => {
-    // Navigate to offramp route to trigger the modal
-    navigate('/offramp');
+    if (onOpenOfframp) {
+      onOpenOfframp();
+    }
   };
 
   return (
