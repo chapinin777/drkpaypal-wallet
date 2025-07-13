@@ -743,6 +743,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      execute_swap_transaction: {
+        Args: {
+          p_user_id: string
+          p_from_currency_id: string
+          p_to_currency_id: string
+          p_from_amount: number
+          p_to_amount: number
+          p_exchange_rate: number
+          p_transaction_type_id: string
+          p_status_id: string
+        }
+        Returns: undefined
+      }
       generate_receive_qr_data: {
         Args: { wallet_addr: string; amount?: number; currency_code?: string }
         Returns: string

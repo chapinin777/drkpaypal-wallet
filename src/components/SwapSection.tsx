@@ -123,7 +123,7 @@ const SwapSection = () => {
         .eq('code', 'completed')
         .single();
 
-      // ACID Transaction: Update both wallets and create transaction record
+      // Call the database function using RPC
       const { error: swapError } = await supabase.rpc('execute_swap_transaction', {
         p_user_id: user.id,
         p_from_currency_id: fromCurrency,
