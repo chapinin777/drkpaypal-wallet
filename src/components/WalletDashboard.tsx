@@ -10,9 +10,13 @@ import {
   Download, 
   TrendingUp,
   RefreshCw,
-  ArrowUpDown
+  ArrowUpDown,
+  Copy,
+  Settings as SettingsIcon,
+  User
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import AssetsSection from './AssetsSection';
 import SendReceiveSection from './SendReceiveSection';
 import SwapSection from './SwapSection';
@@ -22,24 +26,28 @@ import EnhancedTransactionModal from './EnhancedTransactionModal';
 import ServiceFeeModal from './ServiceFeeModal';
 import LivePricing from './LivePricing';
 import CryptoNews from './CryptoNews';
+import UserProfile from './UserProfile';
+import Settings from './Settings';
+import PendingWithdrawals from './PendingWithdrawals';
 
 interface WalletDashboardProps {
   onOpenOfframp?: () => void;
 }
 
 const WalletDashboard = ({ onOpenOfframp }: WalletDashboardProps) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [balance, setBalance] = useState(0);
+  const [walletAddress, setWalletAddress] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showServiceFeeModal, setShowServiceFeeModal] = useState(false);
   const [modalType, setModalType] = useState<'deposit' | 'withdraw'>('deposit');
   const [withdrawAmount, setWithdrawAmount] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
-  const { toast } = useToast();
 
-  // Fetch current balance from Supabase (not wallet connect balance)
+  // Fetch current balance and wallet address from Supabase
   const fetchBalance = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data: usdCurrency } = await supabase
@@ -52,16 +60,27 @@ const WalletDashboard = ({ onOpenOfframp }: WalletDashboardProps) => {
 
       const { data: wallet } = await supabase
         .from('wallets')
-        .select('balance')
+        .select('balance, wallet_address')
         .eq('user_id', user.id)
         .eq('currency_id', usdCurrency.id)
         .single();
 
       if (wallet) {
         setBalance(Number(wallet.balance));
+        setWalletAddress(wallet.wallet_address || '');
       }
     } catch (error) {
       console.error('Failed to fetch balance:', error);
+    }
+  };
+
+  const copyWalletAddress = () => {
+    if (walletAddress) {
+      navigator.clipboard.writeText(walletAddress);
+      toast({
+        title: "Address Copied",
+        description: "Wallet address copied to clipboard"
+      });
     }
   };
 
@@ -281,6 +300,21 @@ const WalletDashboard = ({ onOpenOfframp }: WalletDashboardProps) => {
                 <TrendingUp className="h-4 w-4" />
                 <span className="text-sm">+12.5% this month</span>
               </div>
+              
+              {/* Wallet Address */}
+              {walletAddress && (
+                <div className="glass-light p-3 rounded-lg mt-4">
+                  <p className="text-gray-400 text-xs mb-1">Wallet ID:</p>
+                  <div className="flex items-center justify-center space-x-2">
+                    <code className="text-white text-sm font-mono bg-black/20 px-2 py-1 rounded">
+                      {walletAddress}
+                    </code>
+                    <Button size="sm" variant="ghost" onClick={copyWalletAddress}>
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
             
             {/* Quick Actions */}
@@ -303,15 +337,10 @@ const WalletDashboard = ({ onOpenOfframp }: WalletDashboardProps) => {
           </CardContent>
         </Card>
 
-        {/* Live Pricing and News Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <LivePricing />
-          <CryptoNews />
-        </div>
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="assets" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 glass-card border-white/10 h-12">
+          <TabsList className="grid w-full grid-cols-6 glass-card border-white/10 h-12">
             <TabsTrigger 
               value="assets" 
               className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white"
@@ -334,11 +363,25 @@ const WalletDashboard = ({ onOpenOfframp }: WalletDashboardProps) => {
               Swap
             </TabsTrigger>
             <TabsTrigger 
-              value="history" 
+              value="pending" 
               className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              History
+              Pending
+            </TabsTrigger>
+            <TabsTrigger 
+              value="profile" 
+              className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white"
+            >
+              <User className="h-4 w-4 mr-2" />
+              Profile
+            </TabsTrigger>
+            <TabsTrigger 
+              value="settings" 
+              className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white"
+            >
+              <SettingsIcon className="h-4 w-4 mr-2" />
+              Settings
             </TabsTrigger>
           </TabsList>
 
@@ -355,11 +398,25 @@ const WalletDashboard = ({ onOpenOfframp }: WalletDashboardProps) => {
               <SwapSection />
             </TabsContent>
 
-            <TabsContent value="history" className="fade-in-up">
-              <TransactionHistory refreshKey={refreshKey} />
+            <TabsContent value="pending" className="fade-in-up">
+              <PendingWithdrawals />
+            </TabsContent>
+
+            <TabsContent value="profile" className="fade-in-up">
+              <UserProfile />
+            </TabsContent>
+
+            <TabsContent value="settings" className="fade-in-up">
+              <Settings />
             </TabsContent>
           </div>
         </Tabs>
+
+        {/* Live Pricing and News at bottom */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <LivePricing />
+          <CryptoNews />
+        </div>
 
         {/* Floating Add Balance Button */}
         <FloatingPricingButton onBalanceUpdate={handleRefreshData} onOpenOfframp={onOpenOfframp} />

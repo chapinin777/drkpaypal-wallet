@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,16 +7,48 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Send, QrCode, Copy, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import QRCodeDisplay from './QRCodeDisplay';
 
 const SendReceiveSection = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [sendAmount, setSendAmount] = useState('');
   const [sendRecipient, setSendRecipient] = useState('');
   const [receiveAmount, setReceiveAmount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [walletAddress] = useState('0x742d35Cc6634C0532925a3b8d76c3E');
-  
-  const { toast } = useToast();
+  const [walletAddress, setWalletAddress] = useState('');
+
+  // Fetch user's wallet address
+  useEffect(() => {
+    const fetchWalletAddress = async () => {
+      if (!user) return;
+      
+      try {
+        const { data: usdCurrency } = await supabase
+          .from('currencies')
+          .select('id')
+          .eq('code', 'USD')
+          .single();
+
+        const { data: wallet } = await supabase
+          .from('wallets')
+          .select('wallet_address')
+          .eq('user_id', user.id)
+          .eq('currency_id', usdCurrency.id)
+          .single();
+
+        if (wallet?.wallet_address) {
+          setWalletAddress(wallet.wallet_address);
+        }
+      } catch (error) {
+        console.error('Error fetching wallet address:', error);
+      }
+    };
+
+    fetchWalletAddress();
+  }, [user]);
 
   const handleSend = async () => {
     if (!sendAmount || !sendRecipient) {
@@ -28,21 +60,98 @@ const SendReceiveSection = () => {
       return;
     }
 
+    const amount = parseFloat(sendAmount);
+    if (amount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid amount",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsProcessing(true);
     try {
-      // Simulate ACID transaction
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Get USD currency and user's wallet
+      const { data: usdCurrency } = await supabase
+        .from('currencies')
+        .select('id')
+        .eq('code', 'USD')
+        .single();
+
+      const { data: wallet } = await supabase
+        .from('wallets')
+        .select('id, balance')
+        .eq('user_id', user.id)
+        .eq('currency_id', usdCurrency.id)
+        .single();
+
+      if (!wallet) throw new Error('Wallet not found');
+
+      // Check if user has sufficient balance
+      if (wallet.balance < amount) {
+        toast({
+          title: "Insufficient Balance",
+          description: "You don't have enough balance for this transaction",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Deduct amount from user's balance
+      const { error: updateError } = await supabase
+        .from('wallets')
+        .update({
+          balance: wallet.balance - amount,
+          available_balance: wallet.balance - amount,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', wallet.id);
+
+      if (updateError) throw updateError;
+
+      // Create transaction record
+      const { data: sendType } = await supabase
+        .from('transaction_types')
+        .select('id')
+        .eq('code', 'send')
+        .single();
+
+      const { data: completedStatus } = await supabase
+        .from('transaction_statuses')
+        .select('id')
+        .eq('code', 'completed')
+        .single();
+
+      await supabase
+        .from('transactions')
+        .insert({
+          from_wallet_id: wallet.id,
+          transaction_type_id: sendType?.id,
+          status_id: completedStatus?.id,
+          currency_id: usdCurrency.id,
+          amount: amount,
+          fee: 0,
+          net_amount: amount,
+          description: `Sent to ${sendRecipient}`,
+          metadata: {
+            recipient: sendRecipient,
+            recipient_type: sendRecipient.includes('@') ? 'email' : 'wallet_id'
+          }
+        });
       
       toast({
         title: "Transaction Sent",
-        description: `$${sendAmount} sent successfully to ${sendRecipient}`,
+        description: `$${amount} sent successfully to ${sendRecipient}`,
         variant: "default"
       });
       
       setSendAmount('');
       setSendRecipient('');
     } catch (error) {
-      // Log failed transaction
       console.error('Send transaction failed:', error);
       toast({
         title: "Transaction Failed",
