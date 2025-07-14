@@ -23,7 +23,11 @@ import ServiceFeeModal from './ServiceFeeModal';
 import LivePricing from './LivePricing';
 import CryptoNews from './CryptoNews';
 
-const WalletDashboard = () => {
+interface WalletDashboardProps {
+  onOpenOfframp?: () => void;
+}
+
+const WalletDashboard = ({ onOpenOfframp }: WalletDashboardProps) => {
   const [balance, setBalance] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [showServiceFeeModal, setShowServiceFeeModal] = useState(false);
@@ -120,8 +124,9 @@ const WalletDashboard = () => {
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'deposit':
-        // Redirect to offramp route
-        window.location.href = '/offramp';
+        if (onOpenOfframp) {
+          onOpenOfframp();
+        }
         break;
       case 'withdraw':
         setModalType('withdraw');
@@ -357,7 +362,7 @@ const WalletDashboard = () => {
         </Tabs>
 
         {/* Floating Add Balance Button */}
-        <FloatingPricingButton onBalanceUpdate={handleRefreshData} />
+        <FloatingPricingButton onBalanceUpdate={handleRefreshData} onOpenOfframp={onOpenOfframp} />
 
         {/* Transaction Modal */}
         {showModal && (

@@ -1,10 +1,14 @@
 
-import { Link } from 'react-router-dom';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Wallet, Shield, Zap, Globe, ArrowRight, CheckCircle } from 'lucide-react';
 
-const WalletAuth = () => {
+interface WalletAuthProps {
+  onOpenAuth?: () => void;
+}
+
+const WalletAuth = ({ onOpenAuth }: WalletAuthProps) => {
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Header */}
@@ -20,11 +24,13 @@ const WalletAuth = () => {
               <p className="text-xs text-gray-400">Digital Wallet</p>
             </div>
           </div>
-          <Link to="/auth">
-            <Button variant="outline" className="text-sm border-gray-700 text-gray-300 hover:bg-gray-800">
-              Sign in
-            </Button>
-          </Link>
+          <Button 
+            onClick={onOpenAuth}
+            variant="outline" 
+            className="text-sm border-gray-700 text-gray-300 hover:bg-gray-800"
+          >
+            Sign in
+          </Button>
         </div>
       </header>
 
@@ -40,12 +46,13 @@ const WalletAuth = () => {
             and lightning-fast transactions powered by PayPal technology.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-medium rounded-lg shadow-sm">
-                Get started
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+            <Button 
+              onClick={onOpenAuth}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-medium rounded-lg shadow-sm"
+            >
+              Get started
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
             <Button variant="outline" className="px-8 py-3 text-lg font-medium rounded-lg border-gray-700 text-gray-300 hover:bg-gray-800">
               Learn more
             </Button>
@@ -143,12 +150,13 @@ const WalletAuth = () => {
               Create your Rolland PayPal account in minutes and start managing your digital finances with confidence.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link to="/auth">
-                <Button className="bg-white text-blue-600 hover:bg-gray-50 px-8 py-3 text-lg font-medium rounded-lg">
-                  Create account
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
+              <Button 
+                onClick={onOpenAuth}
+                className="bg-white text-blue-600 hover:bg-gray-50 px-8 py-3 text-lg font-medium rounded-lg"
+              >
+                Create account
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
               <div className="flex items-center space-x-6 text-blue-100 text-sm">
                 <span className="flex items-center">
                   <CheckCircle className="w-4 h-4 mr-2" />
