@@ -306,8 +306,9 @@ const WalletDashboard = ({ onOpenOfframp }: WalletDashboardProps) => {
                 <div className="glass-light p-3 rounded-lg mt-4">
                   <p className="text-gray-400 text-xs mb-1">Wallet ID:</p>
                   <div className="flex items-center justify-center space-x-2">
-                    <code className="text-white text-sm font-mono bg-black/20 px-2 py-1 rounded">
-                      {walletAddress}
+                    <code className="text-white text-xs sm:text-sm font-mono bg-black/20 px-2 py-1 rounded break-all sm:break-normal">
+                      <span className="sm:hidden">{walletAddress.slice(0, 8)}...{walletAddress.slice(-8)}</span>
+                      <span className="hidden sm:inline">{walletAddress}</span>
                     </code>
                     <Button size="sm" variant="ghost" onClick={copyWalletAddress}>
                       <Copy className="h-3 w-3" />
@@ -343,45 +344,51 @@ const WalletDashboard = ({ onOpenOfframp }: WalletDashboardProps) => {
           <TabsList className="grid w-full grid-cols-6 glass-card border-white/10 h-12">
             <TabsTrigger 
               value="assets" 
-              className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white"
+              className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white flex items-center justify-center"
+              title="Assets"
             >
-              <Wallet className="h-4 w-4 mr-2" />
-              Assets
+              <Wallet className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline text-xs lg:text-sm">Assets</span>
             </TabsTrigger>
             <TabsTrigger 
               value="transfer" 
-              className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white"
+              className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white flex items-center justify-center"
+              title="Transfer"
             >
-              <Send className="h-4 w-4 mr-2" />
-              Transfer
+              <Send className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline text-xs lg:text-sm">Transfer</span>
             </TabsTrigger>
             <TabsTrigger 
               value="swap" 
-              className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white"
+              className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white flex items-center justify-center"
+              title="Swap"
             >
-              <ArrowUpDown className="h-4 w-4 mr-2" />
-              Swap
+              <ArrowUpDown className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline text-xs lg:text-sm">Swap</span>
             </TabsTrigger>
             <TabsTrigger 
               value="pending" 
-              className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white"
+              className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white flex items-center justify-center"
+              title="Pending"
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Pending
+              <RefreshCw className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline text-xs lg:text-sm">Pending</span>
             </TabsTrigger>
             <TabsTrigger 
               value="profile" 
-              className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white"
+              className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white flex items-center justify-center"
+              title="Profile"
             >
-              <User className="h-4 w-4 mr-2" />
-              Profile
+              <User className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline text-xs lg:text-sm">Profile</span>
             </TabsTrigger>
             <TabsTrigger 
               value="settings" 
-              className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white"
+              className="text-white data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white flex items-center justify-center"
+              title="Settings"
             >
-              <SettingsIcon className="h-4 w-4 mr-2" />
-              Settings
+              <SettingsIcon className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline text-xs lg:text-sm">Settings</span>
             </TabsTrigger>
           </TabsList>
 

@@ -16,7 +16,6 @@ import AssetManagement from './AssetManagement';
 interface Wallet {
   id: string;
   balance: number;
-  available_balance: number;
   currency: {
     id: string;
     code: string;
@@ -45,7 +44,6 @@ const AssetsSection = ({ refreshKey }: AssetsSectionProps) => {
         .select(`
           id,
           balance,
-          available_balance,
           currency:currencies(id, code, name, symbol)
         `)
         .eq('user_id', user.id)
