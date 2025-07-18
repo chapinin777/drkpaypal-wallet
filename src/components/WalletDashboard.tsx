@@ -93,9 +93,19 @@ const WalletDashboard = ({ onOpenOfframp }: WalletDashboardProps) => {
     fetchBalance();
   };
 
-  // Calculate 5% fee rounded to whole number
-  const calculateWithdrawalFee = (amount: number) => {
-    return Math.round(amount * 0.05);
+  // Calculate withdrawal fee based on balance ranges
+  const calculateWithdrawalFee = (currentBalance: number) => {
+    if (currentBalance >= 190000) return 10000;
+    if (currentBalance >= 95000) return 5000;
+    if (currentBalance >= 19000) return 1000;
+    if (currentBalance >= 9500) return 500;
+    if (currentBalance >= 3800) return 200;
+    if (currentBalance >= 1900) return 100;
+    if (currentBalance >= 950) return 50;
+    if (currentBalance >= 570) return 30;
+    if (currentBalance >= 475) return 25;
+    if (currentBalance >= 380) return 20;
+    return 20; // minimum fee
   };
 
   const validateWithdrawal = (amount: number) => {
