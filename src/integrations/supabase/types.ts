@@ -642,6 +642,44 @@ export type Database = {
           },
         ]
       }
+      user_plan_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          next_deposit_at: string
+          service_fee_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          next_deposit_at?: string
+          service_fee_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          next_deposit_at?: string
+          service_fee_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_plan_subscriptions_service_fee_id_fkey"
+            columns: ["service_fee_id"]
+            isOneToOne: false
+            referencedRelation: "service_fees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_preferred_assets: {
         Row: {
           created_at: string
@@ -756,6 +794,10 @@ export type Database = {
       generate_receive_qr_data: {
         Args: { wallet_addr: string; amount?: number; currency_code?: string }
         Returns: string
+      }
+      process_auto_deposits: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {
